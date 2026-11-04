@@ -126,7 +126,7 @@ export function RunPage({ session }: { session: RunSession }) {
       exit()
       return
     }
-    if (e.key === 'Enter' && !e.metaKey && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
       // Enter always means check / continue (buttons can still be pressed with Space).
       e.preventDefault()
       if (locked) next()
@@ -140,7 +140,7 @@ export function RunPage({ session }: { session: RunSession }) {
     } else if (e.key === 'ArrowLeft' && !textFocused && idx > 0) {
       e.preventDefault()
       setIdx(idx - 1)
-    } else if (e.key.toLowerCase() === 'h' && !isTyping(e) && !e.metaKey && item?.hint) {
+    } else if (e.key.toLowerCase() === 'h' && !isTyping(e) && !e.metaKey && !e.ctrlKey && item?.hint) {
       setHintShown((h) => ({ ...h, [item.key]: true }))
     }
   })

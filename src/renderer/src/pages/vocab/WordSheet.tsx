@@ -50,7 +50,7 @@ function Field({
           {...common}
           rows={Math.max(2, v.split('\n').length)}
           onChange={(e) => setV(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && e.metaKey && (e.currentTarget as HTMLTextAreaElement).blur()}
+          onKeyDown={(e) => e.key === 'Enter' && (e.metaKey || e.ctrlKey) && (e.currentTarget as HTMLTextAreaElement).blur()}
           className={cn(common.className, 'resize-none leading-relaxed')}
         />
       ) : (

@@ -54,7 +54,7 @@ export function Sidebar() {
 
   return (
     <aside className="flex w-[220px] shrink-0 flex-col border-r bg-sidebar">
-      <div className="drag h-[52px] shrink-0" />
+      <div className={cn("drag shrink-0", window.api.platform === "darwin" ? "h-[52px]" : "h-4")} />
       <div className="px-4 pb-4">
         <div className="flex items-center gap-2.5">
           <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-[13px] font-bold text-white shadow-sm">

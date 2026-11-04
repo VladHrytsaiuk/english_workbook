@@ -31,7 +31,7 @@ export function SetupPage() {
     if (dir) await setup(dir)
   }
 
-  const pretty = defaultDir.replace(/^\/Users\/[^/]+/, '~')
+  const pretty = defaultDir.replace(/^\/Users\/[^/]+/, '~').replace(/^[A-Z]:\\Users\\[^\\]+/i, '~')
 
   return (
     <div className="drag flex h-full items-center justify-center bg-gradient-to-b from-background to-muted/40 p-8">
@@ -44,7 +44,7 @@ export function SetupPage() {
         <div className="mb-6 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-base font-bold text-white shadow-md">Ew</div>
         <h1 className="text-[22px] font-semibold tracking-tight">Welcome to EnglishWorkbook</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-          Your notes and tests live as Markdown files in a folder on your Mac. Pick where it should be — the app creates <code className="rounded bg-muted px-1">notes/</code> and{' '}
+          Your notes and tests live as Markdown files in a folder on this computer. Pick where it should be — the app creates <code className="rounded bg-muted px-1">notes/</code> and{' '}
           <code className="rounded bg-muted px-1">tests/</code> with a few examples and watches it for changes.
         </p>
         <div className="mt-6 flex items-center gap-3 rounded-xl border bg-muted/40 px-4 py-3">

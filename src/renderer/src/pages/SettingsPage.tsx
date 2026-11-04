@@ -74,7 +74,7 @@ export function SettingsPage() {
     toast(created.length ? `Folder connected — added ${created.length} example files.` : 'Folder connected.', 'success')
   }
 
-  const pretty = settings.contentDir?.replace(/^\/Users\/[^/]+/, '~')
+  const pretty = settings.contentDir?.replace(/^\/Users\/[^/]+/, '~').replace(/^[A-Z]:\\Users\\[^\\]+/i, '~')
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

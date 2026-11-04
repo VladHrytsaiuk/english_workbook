@@ -18,8 +18,10 @@ function createWindow(): BrowserWindow {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 16, y: 18 },
+    // macOS: content under the title bar with inset traffic lights. Windows/Linux: the standard frame
+    // (a hidden title bar there would need custom window buttons).
+    ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 18 } } : { autoHideMenuBar: true }),
+    title: 'EnglishWorkbook',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0b0b0d' : '#ffffff',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

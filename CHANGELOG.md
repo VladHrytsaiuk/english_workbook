@@ -4,6 +4,16 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.1.0] — 2026-11-04
+
+### Added
+- **Windows build**: an installer (`EnglishWorkbook-Setup-1.1.0.exe`) and a portable `.exe` (x64), built from the
+  same code with `npm run dist:win` (or `npm run dist:all` for macOS + Windows).
+
+### Changed
+- Windows / Linux use the standard window frame (macOS keeps the inset title bar); the menu bar is hidden.
+- Every `⌘` shortcut also works with `Ctrl`.
+
 ## [1.0.0] — 2026-11-04
 
 First version.

@@ -185,7 +185,7 @@ export function Tour() {
   useEffect(() => {
     if (!tourOpen) return
     const on = (e: KeyboardEvent): void => {
-      if (['ArrowRight', 'Enter', 'ArrowLeft', 'Escape'].includes(e.key) || (e.metaKey && /^[1-5,]$/.test(e.key))) {
+      if (['ArrowRight', 'Enter', 'ArrowLeft', 'Escape'].includes(e.key) || ((e.metaKey || e.ctrlKey) && /^[1-5,]$/.test(e.key))) {
         e.preventDefault()
         e.stopPropagation()
       }

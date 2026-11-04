@@ -169,10 +169,10 @@ function TestDetail({ testId }: { testId: string }) {
   }
 
   useKeydown((e) => {
-    if (e.key === 'Enter' && !e.metaKey) {
+    if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
       e.preventDefault()
       start()
-    } else if (e.key === 'Escape' || (e.key === 'ArrowLeft' && e.metaKey)) navigate({ page: 'tests' })
+    } else if (e.key === 'Escape' || (e.key === 'ArrowLeft' && (e.metaKey || e.ctrlKey))) navigate({ page: 'tests' })
   })
 
   if (!test) {

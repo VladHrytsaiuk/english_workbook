@@ -1,6 +1,6 @@
 # EnglishWorkbook
 
-A personal English workbook for macOS: Markdown cheat sheets, interactive tests (8 question types), instant
+A personal English workbook for macOS and Windows: Markdown cheat sheets, interactive tests (8 question types), instant
 EN → UK translation of any selected text, a vocabulary list and progress statistics with a mistakes bank.
 
 All content lives in **plain Markdown files in a folder you choose** (default `~/EnglishWorkbook`), so you can
@@ -23,6 +23,18 @@ npm run dist         # typecheck + unit tests + build → release/EnglishWorkboo
 
 Open the `.dmg`, drag **EnglishWorkbook** to Applications. The app is not code-signed, so the first time
 **right-click → Open** (or *System Settings → Privacy & Security → Open Anyway*).
+
+### Windows
+
+```bash
+npm run dist:win     # → release/EnglishWorkbook-Setup-<version>.exe (installer) and EnglishWorkbook-<version>-portable.exe
+npm run dist:all     # macOS .dmg + Windows .exe in one go
+```
+
+Both can be built on a Mac (no Windows machine needed). The `.exe` files are not code-signed, so Windows SmartScreen
+shows *"Windows protected your PC"* the first time — click **More info → Run anyway**. On Windows, shortcuts use
+`Ctrl` instead of `⌘`, the workbook folder defaults to `C:\Users\<you>\EnglishWorkbook`, API keys are encrypted with
+Windows DPAPI, and pronunciation uses the installed Windows voices (Settings → Time & language → Speech).
 
 > Running from a VS Code task/extension? VS Code may set `ELECTRON_RUN_AS_NODE=1`, which makes Electron start as
 > plain Node. Run `unset ELECTRON_RUN_AS_NODE` first if the window doesn't appear.

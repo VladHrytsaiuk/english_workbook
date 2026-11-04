@@ -17,3 +17,17 @@ mac:
 dmg:
   title: EnglishWorkbook
   artifactName: EnglishWorkbook-${version}-${arch}.dmg
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  artifactName: EnglishWorkbook-Setup-${version}.exe
+portable:
+  artifactName: EnglishWorkbook-${version}-portable.exe
