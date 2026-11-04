@@ -1,0 +1,12 @@
+node_modules
+out
+release
+dist
+.DS_Store
+*.log
+.smoke
+*.tmp
+.env
+.env.*
+.vscode/*
+!.vscode/extensions.json

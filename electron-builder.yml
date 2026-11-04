@@ -1,0 +1,19 @@
+appId: com.vlad.englishworkbook
+productName: EnglishWorkbook
+directories:
+  buildResources: build
+  output: release
+files:
+  - out/**
+  - package.json
+asarUnpack: []
+mac:
+  category: public.app-category.education
+  target:
+    - target: dmg
+      arch: [arm64]
+  identity: null
+  icon: build/icon.png
+dmg:
+  title: EnglishWorkbook
+  artifactName: EnglishWorkbook-${version}-${arch}.dmg
