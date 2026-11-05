@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { InlineMarkdown } from '@/components/Markdown'
 import { Kbd } from '@/components/ui/kbd'
 import { useKeydown } from '@/hooks/useHotkey'
-import { cn, isTyping, shuffle, shuffleDifferent } from '@/lib/utils'
+import { cn, isTyping, shuffleDifferent } from '@/lib/utils'
 import type {
   CheckResult,
   ChoiceQuestion,
@@ -26,7 +26,6 @@ export interface QProps<Q extends SimpleQuestion> {
   /** True once the answer has been checked. */
   locked: boolean
   result?: CheckResult
-  shuffleOptions?: boolean
 }
 
 export const TYPE_LABEL: Record<SimpleQuestion['type'], string> = {
@@ -60,9 +59,9 @@ function digitIndex(e: KeyboardEvent): number {
 
 // ───────────────────────── choice ─────────────────────────
 
-export function ChoiceView({ q, itemKey, value, onChange, locked, shuffleOptions }: QProps<ChoiceQuestion>) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const options = useMemo(() => (shuffleOptions ? shuffle(q.options) : q.options), [itemKey, shuffleOptions])
+export function ChoiceView({ q, value, onChange, locked }: QProps<ChoiceQuestion>) {
+  // Options arrive already in session order (see arrangeItems).
+  const options = q.options
   useKeydown((e) => {
     const i = digitIndex(e)
     if (i >= 0 && i < options.length) {

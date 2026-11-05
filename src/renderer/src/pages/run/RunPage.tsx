@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, BookOpenText, Check, CircleHelp, Lightbulb, ThumbsUp, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InlineMarkdown, Markdown } from '@/components/Markdown'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { useKeydown } from '@/hooks/useHotkey'
 import { type RunSession, useApp } from '@/lib/store'
 import { cn, isTyping, uid } from '@/lib/utils'
 import { checkAnswer, formatCorrectAnswer, formatUserAnswer } from '@shared/answer'
+import { arrangeItems } from '@shared/arrange'
 import type { Attempt, CheckResult, QuestionResult, ReadingPassage, TestItem, UserAnswer } from '@shared/types'
 import { EnterHint, QuestionBody, QuestionPrompt, TYPE_LABEL, isReady } from './questions'
 import { Results } from './Results'
@@ -20,8 +21,8 @@ interface Graded extends CheckResult {
 
 const TYPED = new Set(['gap', 'transform', 'error'])
 
-function buildAttempt(session: RunSession, startedAt: string, answers: Record<string, UserAnswer>, graded: Record<string, Graded>, completed: boolean): Attempt {
-  const results: QuestionResult[] = session.items
+function buildAttempt(session: RunSession, items: TestItem[], startedAt: string, answers: Record<string, UserAnswer>, graded: Record<string, Graded>, completed: boolean): Attempt {
+  const results: QuestionResult[] = items
     .filter((i) => graded[i.key])
     .map((i) => ({
       key: i.key,
@@ -41,7 +42,7 @@ function buildAttempt(session: RunSession, startedAt: string, answers: Record<st
     startedAt,
     finishedAt: new Date().toISOString(),
     completed,
-    total: completed ? session.items.length : results.length,
+    total: completed ? items.length : results.length,
     correct: results.filter((r) => r.correct).length,
     results
   }
@@ -49,7 +50,12 @@ function buildAttempt(session: RunSession, startedAt: string, answers: Record<st
 
 export function RunPage({ session }: { session: RunSession }) {
   const { navigate, route, settings, bumpData, toast } = useApp()
-  const items = session.items
+  // Question and option order is fixed once per session (going back to a question shows the same order).
+  const items = useMemo(
+    () => arrangeItems(session.items, { questions: settings?.shuffleQuestions ?? true, answers: settings?.shuffleAnswers ?? true }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session.id]
+  )
   const [idx, setIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>({})
   const [graded, setGraded] = useState<Record<string, Graded>>({})
@@ -72,7 +78,7 @@ export function RunPage({ session }: { session: RunSession }) {
       const { answers: a, graded: g } = latest.current
       if (!Object.keys(g).length) return null
       saved.current = true
-      const attempt = buildAttempt(session, startedAt.current, a, g, completed)
+      const attempt = buildAttempt(session, items, startedAt.current, a, g, completed)
       await window.api.progress.saveAttempt(attempt, items)
       bumpData()
       return attempt
@@ -105,7 +111,7 @@ export function RunPage({ session }: { session: RunSession }) {
 
   const finish = async (): Promise<void> => {
     const attempt = await save(true)
-    setFinished(attempt ?? buildAttempt(session, startedAt.current, answers, graded, true))
+    setFinished(attempt ?? buildAttempt(session, items, startedAt.current, answers, graded, true))
   }
 
   const next = (): void => {
@@ -186,7 +192,8 @@ export function RunPage({ session }: { session: RunSession }) {
             <motion.div key={item.key} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.16, ease: 'easeOut' }}>
                 <div className="mb-5 flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">{TYPE_LABEL[item.type]}</Badge>
-                  {item.topics.slice(0, 2).map((t) => (
+                  {/* The topic can give the answer away, so it is shown once the question is answered. */}
+                  {(locked || settings?.showTopics) && item.topics.slice(0, 2).map((t) => (
                     <Badge key={t} variant="outline">
                       {t}
                     </Badge>
@@ -203,7 +210,6 @@ export function RunPage({ session }: { session: RunSession }) {
                     onChange={(v) => !locked && setAnswers((a) => ({ ...a, [item.key]: v }))}
                     locked={locked}
                     result={result}
-                    shuffleOptions={settings?.shuffleOptions}
                   />
                 </div>
 

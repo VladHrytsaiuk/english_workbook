@@ -249,7 +249,12 @@ export interface Settings {
   claudeModel: string
   geminiModel: string
   autoTranslate: boolean
-  shuffleOptions: boolean
+  /** Random question order in tests (reading passages keep their questions together). */
+  shuffleQuestions: boolean
+  /** Random order of multiple-choice options. */
+  shuffleAnswers: boolean
+  /** Show a question's topic before it is answered (it can give the answer away). */
+  showTopics: boolean
   /** FSRS target probability of remembering a card when it is due (0.8–0.97). */
   desiredRetention: number
   newCardsPerDay: number

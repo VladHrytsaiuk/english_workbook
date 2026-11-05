@@ -664,3 +664,39 @@ scenarios.notesdoc = async ({ page, shot, contentDir }) => {
   await sleep(400)
   await shot('help')
 }
+
+scenarios.shuffle = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  const order = async () => {
+    const seen = []
+    for (let i = 0; i < 8; i++) {
+      const id = (await page.locator('main span.ml-auto').first().textContent())?.trim()
+      const opts = await page.locator('main button').filter({ hasText: /^\d/ }).allTextContents()
+      seen.push(`${id}${opts.length ? ' [' + opts.map((o) => o.replace(/^\d/, '')).join(' / ') + ']' : ''}`)
+      await page.getByRole('button', { name: /I don't know/ }).click()
+      await sleep(150)
+      await press(page, 'Enter')
+      await sleep(250)
+    }
+    return seen
+  }
+  for (const run of [1, 2]) {
+    await page.getByRole('button', { name: /^Tests/ }).first().click()
+    await sleep(400)
+    await page.getByText('Tenses — All Question Types').first().click()
+    await sleep(500)
+    await press(page, 'Enter')
+    await sleep(500)
+    if (run === 1) await shot('question-before-answer')
+    console.log(`RUN ${run}:`, JSON.stringify(await order(), null, 0))
+    if (run === 1) {
+      await page.getByRole('button', { name: /I don't know/ }).click()
+      await sleep(300)
+      await shot('question-after-answer')
+    }
+    await press(page, 'Escape')
+    await sleep(400)
+  }
+}

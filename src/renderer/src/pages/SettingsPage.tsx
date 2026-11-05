@@ -219,8 +219,14 @@ export function SettingsPage() {
           </Section>
 
           <Section title="Tests">
-            <Row label="Shuffle answer options" description="Randomise the order of options in multiple-choice questions.">
-              <Switch checked={settings.shuffleOptions} onCheckedChange={(shuffleOptions) => void updateSettings({ shuffleOptions })} />
+            <Row label="Shuffle questions" description="A different order every time. Reading passages keep their questions together.">
+              <Switch checked={settings.shuffleQuestions} onCheckedChange={(shuffleQuestions) => void updateSettings({ shuffleQuestions })} />
+            </Row>
+            <Row label="Shuffle answer options" description="The right option moves around, whatever order the file lists them in.">
+              <Switch checked={settings.shuffleAnswers} onCheckedChange={(shuffleAnswers) => void updateSettings({ shuffleAnswers })} />
+            </Row>
+            <Row label="Show topic before answering" description="The topic (e.g. “Present Continuous”) is a strong hint, so by default it appears after you answer.">
+              <Switch checked={settings.showTopics} onCheckedChange={(showTopics) => void updateSettings({ showTopics })} />
             </Row>
           </Section>
 

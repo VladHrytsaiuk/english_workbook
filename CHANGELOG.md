@@ -4,6 +4,19 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.2.0] — 2026-11-05
+
+### Changed
+- **Questions are shuffled** in every test session; the sub-questions of a reading passage stay together and in order.
+- **Multiple-choice options are shuffled**, whatever order the test file lists them in. The order is fixed for the
+  whole session, so going back to a question shows the same order.
+- **The topic of a question is hidden until you answer** (it was a strong hint); it appears with the explanation.
+- Settings → Tests: *Shuffle questions*, *Shuffle answer options* (both on by default) and *Show topic before
+  answering* (off by default). The old "Shuffle answer options" setting (off by default) is replaced.
+
+### Fixed
+- Options could appear in a different order when returning to a question with ←.
+
 ## [1.1.1] — 2026-11-05
 
 ### Added
