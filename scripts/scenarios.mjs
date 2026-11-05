@@ -700,3 +700,40 @@ scenarios.shuffle = async ({ page, shot }) => {
     await sleep(400)
   }
 }
+
+scenarios.persistA = async ({ page }) => {
+  await ensureSetup(page)
+  await seedVocab(page)
+  await page.evaluate(async () => {
+    const w = (await window.api.vocab.list())[0]
+    await window.api.vocab.review(w.id, 3, 'flashcard', 900)
+    const t = (await window.api.content.tests())[0]
+    const items = t.items.slice(0, 3)
+    const results = items.map((i, k) => ({ key: i.key, questionId: i.id, type: i.type, topics: i.topics, correct: k > 0, userAnswer: 'x', correctAnswer: 'y' }))
+    await window.api.progress.saveAttempt({ id: 'p1', testId: t.id, testTitle: t.title, mode: 'full', startedAt: new Date().toISOString(), finishedAt: new Date().toISOString(), completed: true, total: 3, correct: 2, results }, items)
+    await window.api.settings.update({ provider: 'deepl', theme: 'dark', tourDone: true })
+    await window.api.secrets.set('gemini', 'AIzaFAKE-KEY-FOR-PERSISTENCE-TEST')
+  })
+  console.log('A: seeded')
+}
+
+scenarios.persistB = async ({ page }) => {
+  await sleep(1200)
+  const setupShown = (await page.getByRole('button', { name: /Use this folder/ }).count()) > 0
+  await ensureSetup(page)
+  await sleep(1200)
+  const r = await page.evaluate(async () => {
+    const words = await window.api.vocab.list()
+    return {
+      words: words.length,
+      reviewedWord: words.filter((w) => w.srs.state !== 0).length,
+      decks: (await window.api.decks.list()).length,
+      attempts: (await window.api.progress.attempts()).length,
+      mistakes: (await window.api.progress.mistakes()).length,
+      reviewsLog: (await window.api.vocab.reviews()).length,
+      settings: await window.api.settings.get().then((s) => ({ provider: s.provider, theme: s.theme, tourDone: s.tourDone })),
+      keySaved: (await window.api.secrets.status()).gemini
+    }
+  })
+  console.log('B: setupScreenShown=', setupShown, JSON.stringify(r))
+}
