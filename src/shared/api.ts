@@ -33,8 +33,8 @@ export interface WorkbookApi {
     notes(): Promise<NoteDoc[]>
     tests(): Promise<ParsedTest[]>
     openFolder(sub?: 'vocabulary'): Promise<void>
-    /** Opens TEST_FORMAT.md / VOCAB_FORMAT.md from the workbook in the default editor. */
-    openSpec(name: 'TEST_FORMAT.md' | 'VOCAB_FORMAT.md'): Promise<void>
+    /** Opens a format spec (TEST_FORMAT.md / VOCAB_FORMAT.md / NOTES_FORMAT.md) from the workbook in the default editor. */
+    openSpec(name: 'TEST_FORMAT.md' | 'VOCAB_FORMAT.md' | 'NOTES_FORMAT.md'): Promise<void>
     revealFile(kind: 'notes' | 'tests', id: string): Promise<void>
     openFile(kind: 'notes' | 'tests', id: string): Promise<void>
     onChanged(cb: (e: ContentChangeEvent) => void): () => void

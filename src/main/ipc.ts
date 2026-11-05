@@ -79,7 +79,7 @@ export function registerIpc(): void {
   ipcMain.handle('content:notes', () => readNotes(contentDir()))
   ipcMain.handle('content:tests', () => readTests(contentDir()))
   ipcMain.handle('content:openSpec', async (_e, name: string) => {
-    if (name !== 'TEST_FORMAT.md' && name !== 'VOCAB_FORMAT.md') throw new Error('Unknown file')
+    if (!['TEST_FORMAT.md', 'VOCAB_FORMAT.md', 'NOTES_FORMAT.md'].includes(name)) throw new Error('Unknown file')
     ensureWorkbookExtras(contentDir())
     await shell.openPath(join(contentDir(), name))
   })

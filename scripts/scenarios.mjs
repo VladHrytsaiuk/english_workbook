@@ -640,3 +640,27 @@ scenarios.today = async ({ page, shot }) => {
   await sleep(400)
   await shot('help-dialog')
 }
+
+scenarios.notesdoc = async ({ page, shot, contentDir }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // close the first-run tour like a user would
+  const fs = await import('node:fs')
+  console.log('NOTES_FORMAT.md in workbook:', fs.existsSync(join(contentDir, 'NOTES_FORMAT.md')))
+  const doc = fs.readFileSync(join(contentDir, 'NOTES_FORMAT.md'), 'utf8')
+  const example = [...doc.matchAll(/```markdown\n([\s\S]*?)\n```/g)].map((m) => m[1]).at(-1)
+  fs.mkdirSync(join(contentDir, 'notes', 'grammar'), { recursive: true })
+  fs.writeFileSync(join(contentDir, 'notes', 'grammar', 'articles.md'), example)
+  await sleep(1200)
+  await page.getByRole('button', { name: /^Notes/ }).click()
+  await sleep(400)
+  await page.getByText('Articles — a, an, the').first().click()
+  await sleep(500)
+  await shot('example-note')
+  await page.mouse.move(800, 500)
+  await page.mouse.wheel(0, 700)
+  await shot('example-note-scrolled')
+  await page.getByRole('button', { name: 'Help' }).click()
+  await sleep(400)
+  await shot('help')
+}

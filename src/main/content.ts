@@ -11,6 +11,7 @@ import tensesNote from '../../examples/notes/tenses.md?raw'
 import sampleTest from '../../examples/tests/tenses-all-types.md?raw'
 import testFormat from '../../docs/TEST_FORMAT.md?raw'
 import vocabFormat from '../../docs/VOCAB_FORMAT.md?raw'
+import notesFormat from '../../docs/NOTES_FORMAT.md?raw'
 
 export const DEFAULT_CONTENT_DIR = process.env.EW_DEFAULT_CONTENT_DIR || join(homedir(), 'EnglishWorkbook')
 
@@ -54,7 +55,8 @@ export function ensureWorkbookExtras(dir: string): string[] {
   mkdirSync(join(dir, 'vocabulary'), { recursive: true })
   for (const [name, body] of [
     ['TEST_FORMAT.md', testFormat],
-    ['VOCAB_FORMAT.md', vocabFormat]
+    ['VOCAB_FORMAT.md', vocabFormat],
+    ['NOTES_FORMAT.md', notesFormat]
   ] as const) {
     const spec = join(dir, name)
     if (!existsSync(spec)) {

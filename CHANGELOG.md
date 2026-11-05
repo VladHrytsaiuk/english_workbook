@@ -4,6 +4,16 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.1.1] — 2026-11-05
+
+### Added
+- `NOTES_FORMAT.md`: how to write notes — a ready-to-copy quick start, everything Markdown can do in a note,
+  tips, a complete example and a checklist for generating cheat sheets with AI. Copied into the workbook folder
+  (also for existing workbooks) and opened from Help, the empty Notes page and the tour.
+
+### Changed
+- Help dialog: a "How to write files" row with Notes / Tests / Word lists guides.
+
 ## [1.1.0] — 2026-11-04
 
 ### Added

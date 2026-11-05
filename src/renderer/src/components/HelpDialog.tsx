@@ -26,21 +26,24 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose(): void }
               <span className="block text-[12px] text-muted-foreground">A one-minute walk through every section (in Ukrainian)</span>
             </span>
           </button>
-          <div className="grid grid-cols-2 gap-2">
-            <button className={item} onClick={() => void window.api.content.openSpec('TEST_FORMAT.md')}>
-              <FileText className="size-4 text-muted-foreground" />
-              <span>
-                <span className="font-medium">Test format</span>
-                <span className="block text-[12px] text-muted-foreground">TEST_FORMAT.md</span>
-              </span>
-            </button>
-            <button className={item} onClick={() => void window.api.content.openSpec('VOCAB_FORMAT.md')}>
-              <FileText className="size-4 text-muted-foreground" />
-              <span>
-                <span className="font-medium">Word list format</span>
-                <span className="block text-[12px] text-muted-foreground">VOCAB_FORMAT.md</span>
-              </span>
-            </button>
+          <div>
+            <div className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+              <FileText className="size-3.5" /> How to write files
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ['Notes', 'NOTES_FORMAT.md'],
+                  ['Tests', 'TEST_FORMAT.md'],
+                  ['Word lists', 'VOCAB_FORMAT.md']
+                ] as const
+              ).map(([label, file]) => (
+                <button key={file} className={`${item} flex-col items-start gap-0.5`} onClick={() => void window.api.content.openSpec(file)}>
+                  <span className="font-medium">{label}</span>
+                  <span className="text-[11px] text-muted-foreground">{file}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <button className={item} onClick={() => void window.api.content.openFolder()}>
             <FolderOpen className="size-4 text-muted-foreground" />

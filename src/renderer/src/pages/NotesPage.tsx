@@ -150,7 +150,8 @@ export function NotesPage() {
             </Button>
           }
         >
-          Add Markdown files to the <code className="rounded bg-muted px-1">notes/</code> folder — they appear here instantly.
+          Add Markdown files to the <code className="rounded bg-muted px-1">notes/</code> folder — they appear here instantly. How to write them (with a ready-to-copy example and
+          a prompt for AI): <button className="no-drag font-medium text-primary hover:underline" onClick={() => void window.api.content.openSpec('NOTES_FORMAT.md')}>NOTES_FORMAT.md</button>.
         </EmptyState>
       </div>
     )

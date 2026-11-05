@@ -69,6 +69,7 @@ format specs.
 ├── tests/             ← tests (*.md, subfolders allowed)
 ├── vocabulary/        ← word lists (*.md) imported into Vocabulary
 ├── .workbook/         ← your progress: words, reviews, test results (managed by the app)
+├── NOTES_FORMAT.md    ← how to write notes (with an example and an AI checklist)
 ├── TEST_FORMAT.md     ← the test-format spec (give it to Claude to generate tests)
 └── VOCAB_FORMAT.md    ← the word-list format spec
 ```
@@ -251,7 +252,9 @@ src/
     │   └── run/         ← test runner, question types, results
     └── lib/             ← app state (store.tsx), utils
 examples/                ← sample notes/tests copied into a new workbook
+docs/NOTES_FORMAT.md     ← how to write notes (also copied into the workbook)
 docs/TEST_FORMAT.md      ← test-format spec (also copied into the workbook)
+docs/VOCAB_FORMAT.md     ← word-list format spec (also copied into the workbook)
 tests/                   ← vitest unit tests
 scripts/                 ← smoke-test driver, icon renderer
 ```
