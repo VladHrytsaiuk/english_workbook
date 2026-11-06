@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activityByDay, dayKey, minutesFor, streak, suggestedTest, weakTopic } from '../src/renderer/src/lib/today'
+import { activityByDay, dayKey, minutesFor, splitMistakes, streak, suggestedTest, weakTopic } from '../src/renderer/src/lib/today'
 import { parseTest } from '@shared/testParser'
 import type { Attempt, QuestionResult } from '@shared/types'
 
@@ -55,4 +55,20 @@ describe('suggestedTest', () => {
 it('estimates minutes', () => {
   expect(minutesFor(30, 0)).toBe(5)
   expect(minutesFor(0, 3)).toBe(2)
+})
+
+describe('splitMistakes', () => {
+  const entry = (key: string, streak: number, seenDaysAgo: number) =>
+    ({ key, streak, wrongCount: 1, lastWrongAt: daysAgo(seenDaysAgo), lastSeenAt: daysAgo(seenDaysAgo), item: {} as never }) as import('@shared/types').MistakeEntry
+  it('counts a question answered correctly today as done for today', () => {
+    const { toFix, retriedToday } = splitMistakes([entry('a', 1, 0), entry('b', 0, 0), entry('c', 1, 2)], now)
+    expect(retriedToday.map((m) => m.key)).toEqual(['a'])
+    expect(toFix.map((m) => m.key)).toEqual(['b', 'c'])
+  })
+  it('a question that was just got wrong still needs work today', () => {
+    expect(splitMistakes([entry('x', 0, 0)], now).toFix).toHaveLength(1)
+  })
+  it('is empty for an empty bank', () => {
+    expect(splitMistakes([], now)).toEqual({ toFix: [], retriedToday: [] })
+  })
 })

@@ -737,3 +737,50 @@ scenarios.persistB = async ({ page }) => {
   })
   console.log('B: setupScreenShown=', setupShown, JSON.stringify(r))
 }
+
+scenarios.retrytoday = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  // 1. take the sample test, answering every question wrongly with "I don't know"
+  await page.getByRole('button', { name: /^Tests/ }).first().click()
+  await sleep(400)
+  await page.getByText('Tenses — All Question Types').first().click()
+  await sleep(500)
+  await press(page, 'Enter')
+  await sleep(500)
+  for (let i = 0; i < 21; i++) {
+    await page.getByRole('button', { name: /I don't know/ }).click()
+    await sleep(120)
+    await press(page, 'Enter')
+    await sleep(160)
+  }
+  await sleep(800)
+  await shot('results')
+  // 2. retry the mistakes right away (answer them correctly through the bank view: use the real answers)
+  await press(page, 'r')
+  await sleep(600)
+  const answers = await page.evaluate(async () => Object.fromEntries((await window.api.content.tests())[0].items.map((i) => [i.id, i])))
+  for (let i = 0; i < 70; i++) {
+    if (await page.getByText(/Test complete|Good job|Excellent|Perfect|Getting there|Keep practising/).count()) break
+    const id = (await page.locator('main span.ml-auto').first().textContent())?.trim()
+    const q = answers[id]
+    if (!q) break
+    if (q.type === 'choice') await press(page, String(q.options.indexOf(q.answer) + 1))
+    else if (q.type === 'tf') await press(page, q.answer === 'true' ? 't' : q.answer === 'false' ? 'f' : 'n')
+    else if (q.type === 'order') for (const c of q.chunks) await page.locator('button').filter({ hasText: new RegExp('^\\d?\\s*' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$') }).first().click()
+    else if (q.type === 'match') for (const p of q.pairs) await page.locator('button').filter({ hasText: new RegExp('^\\d+\\s*' + p.right.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[A-Z]?$') }).first().click()
+    else await page.keyboard.type(q.answers[0])
+    await press(page, 'Enter', 'Enter')
+    await sleep(200)
+  }
+  await sleep(800)
+  await shot('retry-results')
+  // 3. leave the session (answers so far are saved), then open Today
+  await press(page, 'Escape')
+  await sleep(600)
+  console.log('bank after retry (id:streak):', JSON.stringify((await page.evaluate(() => window.api.progress.mistakes())).map((m) => `${m.item.id}:${m.streak}`)))
+  await page.getByRole('button', { name: /^Today/ }).click()
+  await sleep(800)
+  await shot('today-after-retry')
+}

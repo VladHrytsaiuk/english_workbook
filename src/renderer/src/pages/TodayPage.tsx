@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useApp, useAsync } from '@/lib/store'
-import { dayKey, activityByDay, minutesFor, streak, suggestedTest, weakTopic } from '@/lib/today'
+import { dayKey, activityByDay, minutesFor, splitMistakes, streak, suggestedTest, weakTopic } from '@/lib/today'
 import { cn, pct, plural, relativeTime } from '@/lib/utils'
 import { ALL_SCOPE, buildQueue, speak, todayCounts } from '@/lib/vocab'
 import { statusOf } from '@shared/srs'
@@ -43,7 +43,6 @@ export function TodayPage() {
     const { newSeen, reviews } = todayCounts(logs, now)
     const weak = weakTopic(attempts, tests, now)
     const suggestion = suggestedTest(tests, attempts, now)
-    const mistakesToday = todayAttempts.some((a) => a.mode === 'mistakes')
     const plan: PlanItem[] = []
 
     // 1. Words
@@ -73,16 +72,23 @@ export function TodayPage() {
       })
     }
 
-    // 2. Mistakes bank
-    if (bank.length || mistakesToday) {
+    // 2. Mistakes bank — questions already answered correctly today are done for today (their 2nd correct answer
+    // comes on another day), including ones practised via "Retry mistakes only" on the results screen.
+    const { toFix, retriedToday } = splitMistakes(bank, now)
+    if (bank.length || todayAttempts.some((a) => a.mode === 'mistakes' || a.mode === 'retry')) {
+      const halfway = toFix.filter((m) => m.streak >= 1).length
       plan.push({
         id: 'mistakes',
         icon: Target,
-        title: bank.length ? `Fix ${plural(bank.length, 'mistake')}` : 'Mistakes fixed',
-        detail: bank.length ? `Questions you got wrong · a question leaves the bank after 2 correct answers in a row · about ${minutesFor(0, bank.length)} min` : 'The mistakes bank is empty.',
-        done: bank.length === 0 || mistakesToday,
-        doneText: mistakesToday ? 'Practised today' : 'Empty',
-        action: bank.length ? { label: 'Practise', run: () => startSession({ testId: 'mistakes-bank', title: 'Mistakes bank', topics: [], items: bank.map((m) => m.item), mode: 'mistakes' }) } : undefined
+        title: toFix.length ? `Fix ${plural(toFix.length, 'mistake')}` : bank.length ? 'Mistakes practised' : 'Mistakes fixed',
+        detail: toFix.length
+          ? `Questions you got wrong${halfway ? ` · ${halfway} already have 1 of 2 correct` : ''} · a question leaves the bank after 2 correct answers in a row · about ${minutesFor(0, toFix.length)} min`
+          : bank.length
+            ? `${retriedToday.length ? `${plural(retriedToday.length, 'question')} answered correctly today. ` : ''}${plural(bank.length, 'question')} still need${bank.length === 1 ? 's' : ''} one more correct answer — they come back tomorrow.`
+            : 'The mistakes bank is empty.',
+        done: toFix.length === 0,
+        doneText: bank.length ? 'Done for today' : 'Empty',
+        action: toFix.length ? { label: 'Practise', run: () => startSession({ testId: 'mistakes-bank', title: 'Mistakes bank', topics: [], items: toFix.map((m) => m.item), mode: 'mistakes' }) } : undefined
       })
     }
 

@@ -1,4 +1,4 @@
-import type { Attempt, ParsedTest, TestItem, VocabReviewLog } from '@shared/types'
+import type { Attempt, MistakeEntry, ParsedTest, TestItem, VocabReviewLog } from '@shared/types'
 
 /** Local calendar day, e.g. 2026-11-04. */
 export function dayKey(d: Date | string): string {
@@ -89,3 +89,15 @@ export function suggestedTest(tests: ParsedTest[], attempts: Attempt[], now = ne
 
 /** Rough time estimate for a plan item, in minutes. */
 export const minutesFor = (cards: number, questions: number): number => Math.max(1, Math.round((cards * 10 + questions * 40) / 60))
+
+/**
+ * Splits the mistakes bank for the daily plan. A question that was answered correctly today (streak ≥ 1) is
+ * "retried today": its second correct answer belongs to another day, which also helps memory more than repeating
+ * the same question straight away. Everything else (never retried, or got wrong again) still needs work today.
+ */
+export function splitMistakes(bank: MistakeEntry[], now = new Date()): { toFix: MistakeEntry[]; retriedToday: MistakeEntry[] } {
+  const today = dayKey(now)
+  const retriedToday = bank.filter((m) => m.streak >= 1 && dayKey(m.lastSeenAt) === today)
+  const toFix = bank.filter((m) => !retriedToday.includes(m))
+  return { toFix, retriedToday }
+}

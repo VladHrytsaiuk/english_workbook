@@ -4,6 +4,14 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.2.1] — 2026-11-06
+
+### Fixed
+- **Today → "Fix N mistakes"** kept asking to redo questions you had just corrected. Now a question answered
+  correctly today counts as done for today (its second correct answer comes on another day), whether you
+  practised it from the mistakes bank or with "Retry mistakes only" on the results screen. The plan shows only
+  what still needs work, and says how many questions come back tomorrow.
+
 ## [1.2.0] — 2026-11-05
 
 ### Changed
