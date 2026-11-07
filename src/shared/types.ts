@@ -30,6 +30,8 @@ export interface ChoiceQuestion extends QuestionBase {
   type: 'choice'
   options: string[]
   answer: string
+  /** Keep the options in the listed order (a shared word bank must look the same for every gap). */
+  keepOrder?: boolean
 }
 
 export interface TextQuestion extends QuestionBase {
@@ -290,6 +292,15 @@ export type TranslateResult =
 export interface ContentChangeEvent {
   kind: 'notes' | 'tests' | 'all'
 }
+
+/** A short text with a numbered gap `{n}` for every word; `form` is what goes into the gap. */
+export interface ReadingGapText {
+  title: string
+  passage: string
+  gaps: { n: number; entryId: string; form: string }[]
+}
+
+export type ReadingTextResult = ({ ok: true; provider: TranslationProvider } & ReadingGapText) | { ok: false; code: TranslateErrorCode; message: string }
 
 /** Result of importing `<workbook>/vocabulary/*.md`. */
 export interface VocabSyncSummary {

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { net } from 'electron'
-import type { Enrichment, TranslateErrorCode, TranslateResult, TranslationProvider } from '@shared/types'
+import { dedupKey } from '@shared/dedup'
+import type { Enrichment, ReadingGapText, ReadingTextResult, TranslateErrorCode, TranslateResult, TranslationProvider } from '@shared/types'
 import { getSettings } from './data'
 import { getSecret } from './secrets'
 import { JsonFile } from './storage'
@@ -71,7 +72,7 @@ async function deepl(text: string, context: string | undefined, key: string): Pr
 // ───────────── LLM calls with JSON output (Claude / Gemini) ─────────────
 
 interface JsonSchema {
-  type: 'object' | 'string' | 'array'
+  type: 'object' | 'string' | 'array' | 'integer'
   properties?: Record<string, JsonSchema>
   items?: JsonSchema
   required?: string[]
@@ -420,29 +421,119 @@ export async function enrichWord(word: { text: string; translation: string; cont
     await new Promise((r) => setTimeout(r, 200))
     return { ok: true, provider: 'gemini', data: { pos: 'verb', ipa: '/fake/', level: 'B1', topic: existingTopics[0] ?? 'Everyday Life', examples: [`I use "${word.text}" every day.`], translation: word.translation } }
   }
+  const topics = existingTopics.length ? `\nThe learner's existing topics: ${existingTopics.slice(0, 40).join(', ')}.` : ''
+  const r = await runLlm(
+    {
+      system: ENRICH_SYSTEM,
+      user: `Word or phrase: """${word.text}"""\nKnown translation: ${word.translation || '(none)'}${word.context ? `\nContext: """${word.context}"""` : ''}${topics}`,
+      schema: ENRICH_SCHEMA,
+      task: 'describe this word'
+    },
+    'AI enrichment'
+  )
+  if (!r.ok) return r
+  return { ok: true, provider: r.provider, data: asEnrichment(r.data) }
+}
+
+type LlmResult = { ok: true; data: Json; provider: TranslationProvider } | { ok: false; code: TranslateErrorCode; message: string }
+
+/** Runs a JSON-returning request on the chosen provider (Gemini or Claude), falling back to the other one. */
+async function runLlm(req: LlmRequest, what: string): Promise<LlmResult> {
   const settings = getSettings()
   const order: TranslationProvider[] = settings.provider === 'claude' ? ['claude', 'gemini'] : ['gemini', 'claude']
   const usable = order.filter((p) => getSecret(p))
-  if (!usable.length) return fail('no-key', 'AI enrichment needs a Gemini or Claude API key (Settings → Translation).') as EnrichResult
-  if (!net.isOnline()) return fail('offline', "You're offline.") as EnrichResult
-
-  const topics = existingTopics.length ? `\nThe learner's existing topics: ${existingTopics.slice(0, 40).join(', ')}.` : ''
-  const req: LlmRequest = {
-    system: ENRICH_SYSTEM,
-    user: `Word or phrase: """${word.text}"""\nKnown translation: ${word.translation || '(none)'}${word.context ? `\nContext: """${word.context}"""` : ''}${topics}`,
-    schema: ENRICH_SCHEMA,
-    task: 'describe this word'
-  }
+  if (!usable.length) return { ok: false, code: 'no-key', message: `${what} needs a Gemini or Claude API key (Settings → Translation).` }
+  if (!net.isOnline()) return { ok: false, code: 'offline', message: "You're offline." }
   let last: TranslateError | null = null
   for (const p of usable) {
     const key = getSecret(p) as string
     try {
-      const r = p === 'gemini' ? await geminiJson(req, key, settings.geminiModel) : await claudeJson(req, key, settings.claudeModel)
-      return { ok: true, provider: p, data: asEnrichment(r) }
+      const data = p === 'gemini' ? await geminiJson(req, key, settings.geminiModel) : await claudeJson(req, key, settings.claudeModel)
+      return { ok: true, data, provider: p }
     } catch (e) {
       last = e instanceof TranslateError ? e : new TranslateError('unknown', String(e))
       if (!FALLBACK_CODES.has(last.code)) break
     }
   }
-  return fail(last?.code ?? 'unknown', last?.message ?? 'Enrichment failed.') as EnrichResult
+  return { ok: false, code: last?.code ?? 'unknown', message: last?.message ?? `${what} failed.` }
+}
+
+// ───────────── reading passage for "fill the gaps" ─────────────
+
+const READING_SYSTEM = `You write short reading passages for Ukrainian learners of English (level B1–B2).
+Write ONE coherent, natural passage (110–170 words, one or two short paragraphs, plain text) about an everyday topic that
+uses ALL of the given words or phrases, each exactly once. Do not use any of the listed words anywhere else in the text.
+
+Replace each use with a numbered placeholder {1}, {2}, {3}… in the order they appear in the text.
+For every placeholder return:
+- "n": the placeholder number;
+- "word": the item from the list, exactly as given;
+- "form": the exact words that fit the gap. You may inflect the item to fit the grammar (gave up, deadlines, looking forward to),
+  but keep it recognisable.
+
+Write the sentences around each gap so that exactly one of the listed words fits it (the surrounding meaning and grammar must make
+the choice clear), and so that a learner who knows the word can find it. Give the passage a short title. No translations, no Markdown.`
+
+const READING_SCHEMA: JsonSchema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    passage: { type: 'string' },
+    gaps: {
+      type: 'array',
+      items: { type: 'object', properties: { n: { type: 'integer' }, word: { type: 'string' }, form: { type: 'string' } }, required: ['n', 'word', 'form'], additionalProperties: false }
+    }
+  },
+  required: ['title', 'passage', 'gaps'],
+  additionalProperties: false
+}
+
+/** Checks that the model followed the format: every placeholder once, every gap tied to one of our words. */
+function validateReading(raw: Json, words: { id: string; text: string }[]): ReadingGapText | null {
+  const passage = typeof raw.passage === 'string' ? raw.passage.trim() : ''
+  const title = typeof raw.title === 'string' && raw.title.trim() ? raw.title.trim() : 'Fill the gaps'
+  const gapsRaw = Array.isArray(raw.gaps) ? raw.gaps : []
+  const placeholders = [...passage.matchAll(/\{(\d+)\}/g)].map((m) => Number(m[1]))
+  if (!passage || !placeholders.length || new Set(placeholders).size !== placeholders.length) return null
+  const gaps: ReadingGapText['gaps'] = []
+  const usedWords = new Set<string>()
+  for (const g of gapsRaw as Json[]) {
+    const n = Number(g.n)
+    const form = typeof g.form === 'string' ? g.form.trim() : ''
+    const entry = words.find((w) => dedupKey(w.text) === dedupKey(String(g.word ?? '')))
+    if (!placeholders.includes(n) || !form || form.length > 40 || !entry || usedWords.has(entry.id) || gaps.some((x) => x.n === n)) return null
+    usedWords.add(entry.id)
+    gaps.push({ n, entryId: entry.id, form })
+  }
+  if (gaps.length !== placeholders.length || gaps.length < Math.min(3, words.length)) return null
+  return { title, passage, gaps: gaps.sort((a, b) => a.n - b.n) }
+}
+
+/** Asks the AI for a short passage that uses the learner's words once each, with a gap for every word. */
+export async function generateReadingPassage(words: { id: string; text: string; translation: string; pos?: string }[]): Promise<ReadingTextResult> {
+  const list = words.slice(0, 8)
+  if (process.env.EW_FAKE_TRANSLATE) {
+    await new Promise((r) => setTimeout(r, 300))
+    const gaps = list.map((w, i) => ({ n: i + 1, entryId: w.id, form: w.text }))
+    return { ok: true, provider: 'gemini', title: 'A short fake story', passage: list.map((_w, i) => `On day ${i + 1} we needed {${i + 1}} to finish the plan.`).join(' '), gaps }
+  }
+  const req: LlmRequest = {
+    system: READING_SYSTEM,
+    user: `Words and phrases to use:\n${list.map((w, i) => `${i + 1}. ${w.text}${w.pos ? ` (${w.pos})` : ''} — ${w.translation}`).join('\n')}`,
+    schema: READING_SCHEMA,
+    task: 'write the passage'
+  }
+  let last: { code: TranslateErrorCode; message: string } = { code: 'unknown', message: 'The AI did not return a usable text.' }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await runLlm(req, 'The reading text')
+    if (!r.ok) {
+      last = r
+      if (!FALLBACK_CODES.has(r.code)) break
+      continue
+    }
+    const ok = validateReading(r.data, list)
+    if (ok) return { ok: true, provider: r.provider, ...ok }
+    last = { code: 'unknown', message: 'The AI returned a text in the wrong format.' }
+  }
+  return { ok: false, ...last }
 }

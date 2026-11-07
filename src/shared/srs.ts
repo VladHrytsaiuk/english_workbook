@@ -128,12 +128,21 @@ export function suggestedGrade(verdict: TypedVerdict): SrsGrade {
   return verdict === 'correct' ? 3 : verdict === 'typo' ? 2 : 1
 }
 
-/** Replaces the word inside its context sentence with a gap. Returns null when the word isn't found. */
+/**
+ * Replaces the word inside its context sentence with a gap. Returns null when the word isn't found.
+ * A leading "to" / article of the saved word is optional ("to give up" is found in "Don't give up").
+ */
 export function makeCloze(context: string | undefined, text: string): { before: string; after: string } | null {
   if (!context) return null
-  const escaped = text.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
-  const m = new RegExp(`(^|[^\\p{L}])(${escaped})(?=[^\\p{L}]|$)`, 'iu').exec(context)
-  if (!m) return null
-  const start = m.index + m[1].length
-  return { before: context.slice(0, start), after: context.slice(start + m[2].length) }
+  const full = text.trim()
+  const bare = full.replace(/^(to|a|an|the)\s+(?=\S)/i, '')
+  for (const candidate of bare === full ? [full] : [full, bare]) {
+    const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
+    const m = new RegExp(`(^|[^\\p{L}])(${escaped})(?=[^\\p{L}]|$)`, 'iu').exec(context)
+    if (m) {
+      const start = m.index + m[1].length
+      return { before: context.slice(0, start), after: context.slice(start + m[2].length) }
+    }
+  }
+  return null
 }

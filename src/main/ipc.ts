@@ -7,7 +7,7 @@ import * as data from './data'
 import { clearSecret, secretsStatus, setSecret } from './secrets'
 import { learningDataDir, useWorkbookDir } from './storage'
 import { syncVocabularyFolder } from './vocabFiles'
-import { clearTranslationCache, enrichWord, translate, translationCacheSize } from './translate'
+import { clearTranslationCache, enrichWord, generateReadingPassage, translate, translationCacheSize } from './translate'
 import * as vocab from './vocab'
 
 function contentDir(): string {
@@ -116,6 +116,11 @@ export function registerIpc(): void {
     return vocab.reviewVocab(id, grade as SrsGrade, mode, durationMs)
   })
   ipcMain.handle('vocab:reviews', () => vocab.listReviews())
+  ipcMain.handle('vocab:readingText', (_e, list: unknown) => {
+    const all = vocab.listVocab()
+    const words = ids(list).map((id) => all.find((v) => v.id === id)).filter((v): v is VocabEntry => Boolean(v))
+    return generateReadingPassage(words)
+  })
   ipcMain.handle('vocab:sync', () => syncVocabularyFolder(contentDir()))
   ipcMain.handle('vocab:enrich', async (_e, id: string) => {
     const all = vocab.listVocab()

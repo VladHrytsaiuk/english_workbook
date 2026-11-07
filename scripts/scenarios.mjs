@@ -864,3 +864,82 @@ scenarios.wordtestpages = async ({ page, shot }) => {
   await sleep(500)
   await shot('dialog-from-deck-view')
 }
+
+scenarios.readinggaps = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  await seedVocab(page)
+  const openDialog = async () => {
+    await page.getByRole('button', { name: /^Notes/ }).click()
+    await sleep(250)
+    await page.getByRole('button', { name: /^Vocabulary/ }).click()
+    await sleep(500)
+    await page.getByRole('button', { name: 'Test', exact: true }).click()
+    await sleep(500)
+  }
+  // 1. Nothing practised yet → the dialog must not offer new words by default
+  await openDialog()
+  await shot('dialog-nothing-practised')
+  const startDisabled = await page.getByRole('button', { name: 'Start test' }).isDisabled()
+  console.log('1. nothing practised: Start disabled =', startDisabled)
+  await press(page, 'Escape')
+  // 2. Practise 6 words, then the quiz may only contain those
+  const practisedIds = await page.evaluate(async () => {
+    const words = await window.api.vocab.list()
+    const ids = []
+    for (const w of words.slice(0, 6)) { await window.api.vocab.review(w.id, 3, 'flashcard', 900); ids.push(w.id) }
+    return ids
+  })
+  await openDialog()
+  await shot('dialog-after-practice')
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(700)
+  for (let i = 0; i < 20; i++) {
+    if (await page.getByText(/Word test complete/).count()) break
+    const kind = (await page.locator('main span.rounded-md').first().textContent())?.trim()
+    if (kind === 'Multiple choice') await press(page, '1', 'Enter')
+    else await page.getByRole('button', { name: /I don't know/ }).click()
+    await sleep(150)
+    await press(page, 'Enter')
+    await sleep(200)
+  }
+  await sleep(600)
+  const quiz = await page.evaluate(async () => (await window.api.progress.attempts()).at(-1))
+  const askedIds = quiz.results.filter((r) => !r.key.startsWith('words#match')).map((r) => r.key.replace('words#', '').replace(/:.*/, ''))
+  console.log('2. quiz asked about', askedIds.length, 'words; all of them practised =', askedIds.every((id) => practisedIds.includes(id)))
+  await press(page, 'Escape')
+  await sleep(300)
+  // 3. Reading with gaps (fake AI text)
+  await openDialog()
+  await page.getByRole('button', { name: 'Reading with gaps' }).click()
+  await sleep(300)
+  await shot('dialog-reading-format')
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(1200)
+  await shot('reading-first-gap')
+  const info = await page.evaluate(() => ({ title: document.querySelector('main header span.truncate')?.textContent, passage: document.querySelector('main h2')?.textContent, options: [...document.querySelectorAll('main button')].filter((b) => /^\d/.test(b.textContent ?? '')).map((b) => b.textContent?.replace(/^\d/, '')) }))
+  console.log('3. reading session:', JSON.stringify(info))
+  await press(page, '1', 'Enter')
+  await sleep(300)
+  await shot('reading-after-answer')
+  await press(page, 'Escape')
+}
+
+scenarios.readingoffline = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape')
+  await seedVocab(page)
+  await page.evaluate(async () => { for (const w of (await window.api.vocab.list()).slice(0, 8)) await window.api.vocab.review(w.id, 3, 'flashcard', 900) })
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(500)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  await sleep(400)
+  await page.getByRole('button', { name: 'Reading with gaps' }).click()
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(2500)
+  await shot('offline-reading')
+  const info = await page.evaluate(() => document.querySelector('main')?.innerText.slice(0, 700))
+  console.log('offline reading screen:\n' + info)
+}

@@ -1,6 +1,6 @@
 import { dedupKey } from './dedup'
 import { isDifficult, makeCloze, statusOf } from './srs'
-import type { SimpleQuestion, TestItem, VocabEntry } from './types'
+import type { ReadingGapText, SimpleQuestion, TestItem, VocabEntry } from './types'
 
 // Tests built from the learner's own vocabulary. They use the normal test engine (results, mistakes bank,
 // topic breakdown) but never touch the spaced-repetition schedule: this is a check, not a review.
@@ -18,6 +18,9 @@ export const WORD_KINDS: { id: WordKind; label: string; hint: string }[] = [
 
 export type WordSource = 'week' | 'studying' | 'difficult' | 'all'
 
+/** A word counts as practised once it has been reviewed at least once; a test is for what you have already worked on. */
+export const isPractised = (e: VocabEntry): boolean => e.srs.state !== 0
+
 export const WORD_SOURCE_LABEL: Record<WordSource, string> = {
   week: 'Added this week',
   studying: 'Not mastered yet',
@@ -31,8 +34,12 @@ export const MIN_WORDS_FOR_TEST = 4
 /** Words that can be asked: not suspended, with a translation. */
 export const isTestable = (e: VocabEntry): boolean => !e.suspended && Boolean(e.text.trim()) && Boolean(e.translation.trim())
 
-export function filterBySource(entries: VocabEntry[], source: WordSource, now = new Date()): VocabEntry[] {
-  const ok = entries.filter(isTestable)
+/**
+ * Words of a source. Words you haven't reviewed yet (new) are left out unless `includeNew` is set — a test is meant
+ * for consolidating material you have already practised.
+ */
+export function filterBySource(entries: VocabEntry[], source: WordSource, now = new Date(), includeNew = false): VocabEntry[] {
+  const ok = entries.filter((e) => isTestable(e) && (includeNew || isPractised(e)))
   switch (source) {
     case 'week':
       return ok.filter((e) => new Date(e.createdAt).getTime() >= now.getTime() - 7 * DAY)
@@ -248,6 +255,111 @@ export function buildWordTest(selected: VocabEntry[], pool: VocabEntry[], opts: 
   }
 
   return shuffle(items, rand).map((it, i) => ({ ...it, id: `W${i + 1}` }) as TestItem)
+}
+
+/** Picks `n` words at random; difficult words (lapses, high difficulty) are more likely to be chosen. */
+export function pickWords(list: VocabEntry[], n: number, rand: Rand = Math.random): VocabEntry[] {
+  return weightedOrder(list, (e) => 1 + e.srs.lapses * 2 + (isDifficult(e) ? 1 : 0), rand).slice(0, n)
+}
+
+/** True when a saved sentence of the word contains it, so it can be blanked out. */
+export function hasGapSentence(e: VocabEntry): boolean {
+  return sentences(e).some((s) => makeCloze(s, e.text.trim()))
+}
+
+// ───────────── reading with gaps: a text and a bank of words ─────────────
+
+export interface ReadingGapOptions {
+  rand?: Rand
+  title?: string
+}
+
+const GAP_MARK = '\\_\\_\\_\\_\\_\\_' // escaped underscores, so Markdown shows a plain blank
+
+/** The sentence around gap `n`, with the right words filled in and the asked one in bold. */
+function filledSentence(passage: string, gaps: { n: number; form: string }[], n: number): string {
+  const sentence = passage.split(/(?<=[.!?])\s+|\n+/).find((s) => s.includes(`{${n}}`)) ?? ''
+  return sentence.replace(/\{(\d+)\}/g, (_m, k: string) => {
+    const g = gaps.find((x) => x.n === Number(k))
+    return g ? (Number(k) === n ? `**${g.form}**` : g.form) : '…'
+  })
+}
+
+/**
+ * A reading-style exercise: a short text with numbered gaps and a shared bank of words. Every gap is a multiple-choice
+ * sub-question over the same bank (the forms to insert, plus one or two words from your library that don't fit).
+ * Each gap counts separately in the score and the mistakes bank, like the sub-questions of a reading block.
+ */
+export function buildReadingTest(entries: VocabEntry[], text: ReadingGapText, pool: VocabEntry[], opts: ReadingGapOptions = {}): TestItem[] {
+  const rand = opts.rand ?? Math.random
+  const byId = new Map(entries.map((e) => [e.id, e]))
+  const gaps = text.gaps.filter((g) => byId.has(g.entryId) && g.form.trim()).sort((a, b) => a.n - b.n)
+  if (gaps.length < 2) return []
+  const title = opts.title ?? 'Word test · Reading'
+  const passage = text.passage.replace(/\{(\d+)\}/g, (_m, n: string) => `**(${n})** ${GAP_MARK}`)
+  // A word at the start of a sentence is capitalised ("Although it rained…"); in the bank it is written like the saved word,
+  // otherwise the capital letter would reveal which gaps begin a sentence.
+  const bankForm = (g: { entryId: string; form: string }): string => {
+    const f = g.form.trim()
+    const saved = (byId.get(g.entryId)?.text ?? f).trim()
+    return /^\p{Lu}/u.test(f) && !/^\p{Lu}/u.test(saved) ? f[0].toLowerCase() + f.slice(1) : f
+  }
+  const forms = uniq(gaps.map(bankForm))
+  const extras = shuffle(
+    pool.filter((p) => isTestable(p) && !byId.has(p.id) && !forms.some((f) => dedupKey(f) === dedupKey(p.text))),
+    rand
+  )
+    .slice(0, gaps.length >= 5 ? 2 : 1)
+    .map((p) => p.text.trim())
+  const bank = shuffle(uniq([...forms, ...extras]), rand)
+  const reading = { id: 'WR', title: text.title, passage }
+
+  return gaps.map((g) => {
+    const e = byId.get(g.entryId) as VocabEntry
+    return {
+      id: `G${g.n}`,
+      type: 'choice',
+      prompt: `Gap **(${g.n})** — which word fits?`,
+      options: bank,
+      answer: bankForm(g),
+      keepOrder: true,
+      explain: `**${e.text}** — ${e.translation}\n\n*${filledSentence(text.passage, gaps, g.n)}*`,
+      topics: ['Vocabulary · Reading'],
+      line: 0,
+      key: `words#reading:${e.id}`,
+      testId: 'words',
+      testTitle: title,
+      reading
+    } as TestItem
+  })
+}
+
+/**
+ * The offline version of the exercise: the sentences where you met the words, each with a gap, and one shared bank.
+ * Needs at least 3 words that have a saved sentence.
+ */
+export function buildSentenceGapTest(entries: VocabEntry[], pool: VocabEntry[], opts: ReadingGapOptions = {}): TestItem[] {
+  const usable: { e: VocabEntry; before: string; after: string; form: string }[] = []
+  for (const e of entries.filter(isTestable)) {
+    for (const s of sentences(e)) {
+      const c = makeCloze(s, e.text.trim())
+      if (c) {
+        usable.push({ e, before: c.before, after: c.after, form: s.slice(c.before.length, s.length - c.after.length) })
+        break
+      }
+    }
+  }
+  if (usable.length < 3) return []
+  return buildReadingTest(
+    entries,
+    {
+      title: 'Fill the gaps',
+      passage: usable.map((u, i) => `${u.before}{${i + 1}}${u.after}`).join('\n\n'),
+      gaps: usable.map((u, i) => ({ n: i + 1, entryId: u.e.id, form: u.form }))
+    },
+    pool,
+    opts
+  )
 }
 
 // ───────────── prompt for an external AI chat ─────────────

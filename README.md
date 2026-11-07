@@ -169,12 +169,17 @@ day, practice style, pronunciation (macOS voice). Stats shows mastered words, re
 
 ### Word tests
 
-A test made of **your own words** (Vocabulary → **Test**, Tests → **Word test**, or the *Word test* item in Today's
+A test made of **your own words** you have **already practised** (new, never-reviewed words are left out unless you tick
+the box in the dialog) (Vocabulary → **Test**, Tests → **Word test**, or the *Word test* item in Today's
 plan). Pick the words (this view / not mastered yet / added this week / difficult / all), 10–30 of them, and the
 question types: choose the translation, choose the English word, write it in English (a verb is accepted with or without
 *to*), fill the gap in **the sentence where you found the word**, build a sentence from an example, and a matching round
 (5 pairs per 8 words). Difficult words come up more often. Results, the per-topic breakdown (*Vocabulary · Work*…) and
 the mistakes bank work as in any test, but a word test never changes the review schedule.
+
+**Reading with gaps** is a second format: AI writes a short text that uses 4, 6 or 8 of your words once each, and you put
+every word into its gap from a word bank (with one or two extra words that don't fit). Without a key or internet the
+exercise is built from the sentences you saved with the words.
 
 **AI prompt** copies a ready-to-paste prompt with your words (translation, part of speech, the sentence you found
 them in) and the complete test format, so a chat that knows nothing about the app can write a vocabulary test for exactly

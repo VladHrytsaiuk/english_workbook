@@ -4,6 +4,23 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.4.0] — 2026-11-07
+
+### Added
+- **Reading with gaps** (Word test → *Reading with gaps*): AI writes a short text that uses 4, 6 or 8 of your words once
+  each; you put every word into its gap from a shared word bank (plus one or two words that don't fit). Every gap counts
+  separately. Without a key or internet it is built from the sentences you saved with the words. The bank shows words in
+  lower case, so a capital letter doesn't reveal which gaps start a sentence.
+
+### Changed
+- **A word test now covers only words you have already practised** (reviewed at least once). New, never-reviewed words
+  are left out unless you tick *Also include N new words I haven't reviewed yet*. The same applies to the Word test
+  item on Today. If fewer than 4 words are practised, the dialog says so.
+
+### Fixed
+- A saved phrase with a leading *to* / article ("to give up") got no gap in a sentence that has only "give up". The
+  leading word is now optional, in word tests and in review.
+
 ## [1.3.0] — 2026-11-07
 
 ### Added

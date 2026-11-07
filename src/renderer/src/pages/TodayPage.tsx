@@ -76,8 +76,10 @@ export function TodayPage() {
 
     // 1b. A test made of your own words
     const wordPool = vocab.filter(isTestable)
+    // Only words that have been reviewed at least once: a test is for consolidating, not for first contact.
     const studying = filterBySource(vocab, 'studying', now)
-    const testWords = studying.length >= 5 ? studying : wordPool
+    const practised = filterBySource(vocab, 'all', now)
+    const testWords = studying.length >= 5 ? studying : practised
     const wordTestToday = todayAttempts.some((a) => a.mode === 'words' && a.completed)
     if ((testWords.length >= MIN_WORDS_FOR_TEST && new Set(wordPool.map((w) => w.translation.trim().toLowerCase())).size >= 4) || wordTestToday) {
       const n = Math.min(10, testWords.length)
@@ -85,7 +87,7 @@ export function TodayPage() {
         id: 'wordtest',
         icon: ClipboardCheck,
         title: wordTestToday ? 'Word test done' : `Word test: ${plural(n, 'word')}`,
-        detail: wordTestToday ? 'You checked your words today.' : `${studying.length >= 5 ? 'From the words you haven\'t mastered yet' : 'From your words'} · about ${minutesFor(0, n)} min · doesn't change your review schedule`,
+        detail: wordTestToday ? 'You checked your words today.' : `${studying.length >= 5 ? 'From the words you are still learning' : 'From the words you have practised'} · about ${minutesFor(0, n)} min · doesn't change your review schedule`,
         done: wordTestToday,
         doneText: 'Done',
         action: {

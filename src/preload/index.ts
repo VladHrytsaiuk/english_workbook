@@ -45,6 +45,7 @@ const api: WorkbookApi = {
     reset: (ids) => invoke('vocab:reset', ids),
     review: (id, grade, mode, durationMs) => invoke('vocab:review', id, grade, mode, durationMs),
     reviews: () => invoke('vocab:reviews'),
+    readingText: (ids) => invoke('vocab:readingText', ids),
     sync: () => invoke('vocab:sync'),
     onChanged: (cb) => {
       const listener = (_: unknown, e: VocabSyncSummary): void => cb(e)

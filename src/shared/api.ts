@@ -5,6 +5,7 @@ import type {
   SrsGrade,
   VocabInput,
   VocabReviewLog,
+  ReadingTextResult,
   VocabSyncSummary,
   ContentChangeEvent,
   MistakeEntry,
@@ -59,6 +60,8 @@ export interface WorkbookApi {
     reset(ids: string[]): Promise<void>
     review(id: string, grade: SrsGrade, mode: ReviewMode, durationMs?: number): Promise<VocabEntry | null>
     reviews(): Promise<VocabReviewLog[]>
+    /** An AI-written short text that uses the given words once each, with a gap for every word. */
+    readingText(ids: string[]): Promise<ReadingTextResult>
     /** Re-reads `<workbook>/vocabulary/*.md`. */
     sync(): Promise<VocabSyncSummary>
     onChanged(cb: (e: VocabSyncSummary) => void): () => void

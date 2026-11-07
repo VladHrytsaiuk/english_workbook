@@ -93,6 +93,12 @@ describe('makeCloze', () => {
   it('does not match inside other words', () => {
     expect(makeCloze('The carpet is red.', 'pet')).toBeNull()
   })
+  it('finds a saved verb phrase or noun without its leading "to" / article', () => {
+    expect(makeCloze("Don't give up on your dreams.", 'to give up')).toEqual({ before: "Don't ", after: ' on your dreams.' })
+    expect(makeCloze('We met the deadline.', 'the deadline')).toEqual({ before: 'We met ', after: '.' }) // full form found
+    expect(makeCloze('We met a deadline.', 'the deadline')).toEqual({ before: 'We met a ', after: '.' }) // only the bare word is there
+    expect(makeCloze('I want to give up.', 'to give up')).toEqual({ before: 'I want ', after: '.' }) // the full form still wins
+  })
   it('returns null without context', () => {
     expect(makeCloze(undefined, 'word')).toBeNull()
   })

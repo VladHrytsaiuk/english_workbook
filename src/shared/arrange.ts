@@ -25,5 +25,5 @@ export function arrangeItems(items: TestItem[], opts: { questions: boolean; answ
   }
   const ordered = opts.questions ? shuffled(groups, rand).flat() : groups.flat()
   if (!opts.answers) return ordered
-  return ordered.map((i) => (i.type === 'choice' ? { ...i, options: shuffled(i.options, rand) } : i))
+  return ordered.map((i) => (i.type === 'choice' && !i.keepOrder ? { ...i, options: shuffled(i.options, rand) } : i))
 }
