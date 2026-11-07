@@ -49,14 +49,54 @@ export function normalizeTf(raw: unknown): TfValue | null {
   return null
 }
 
-export function checkAnswer(q: SimpleQuestion, answer: UserAnswer): CheckResult {
+
+/** Edit distance where swapping two neighbouring letters counts as one edit (optimal string alignment). */
+function editDistance(a: string, b: string): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)))
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
+    }
+  }
+  return d[a.length][b.length]
+}
+
+export type TypedVerdict = 'correct' | 'typo' | 'wrong'
+
+/**
+ * Compares a typed word/phrase with the card text. Case, spacing, apostrophes and final punctuation
+ * are ignored, and a leading "to " on verbs is optional. One slip (a wrong, missing or swapped letter) counts as a
+ * "typo" for words of 5+ letters, two slips for phrases over 10 letters; short words must be exact (take ≠ make).
+ */
+export function checkTyped(input: string, target: string): TypedVerdict {
+  const strip = (s: string): string => normalizeAnswer(s).replace(/^to\s+/, '')
+  const a = strip(input)
+  const b = strip(target)
+  if (!a) return 'wrong'
+  if (a === b) return 'correct'
+  const allowed = b.length > 10 ? 2 : b.length >= 5 ? 1 : 0
+  return editDistance(a, b) <= allowed ? 'typo' : 'wrong'
+}
+
+export function checkAnswer(q: SimpleQuestion, answer: UserAnswer, opts: { forgiveTypos?: boolean } = {}): CheckResult {
   switch (q.type) {
     case 'choice':
       return { correct: typeof answer === 'string' && answer === q.answer }
     case 'gap':
     case 'transform':
-    case 'error':
-      return { correct: typeof answer === 'string' && matchesAny(answer, q.answers) }
+    case 'error': {
+      if (typeof answer !== 'string') return { correct: false }
+      if (matchesAny(answer, q.answers)) return { correct: true }
+      // Vocabulary spelling questions only: one slip in a word of 5+ letters still counts (grammar stays exact: has ≠ had).
+      if (opts.forgiveTypos && q.typoTolerant) {
+        const verdicts = q.answers.map((a) => checkTyped(answer, a))
+        if (verdicts.includes('correct')) return { correct: true }
+        if (verdicts.includes('typo')) return { correct: true, typo: true }
+      }
+      return { correct: false }
+    }
     case 'tf':
       return { correct: typeof answer === 'string' && normalizeTf(answer) === q.answer }
     case 'order': {

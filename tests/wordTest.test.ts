@@ -109,6 +109,16 @@ describe('buildWordTest', () => {
     expect(checkAnswer(q, 'painted').correct).toBe(false)
   })
 
+  it('typing and gap questions forgive one spelling slip; choice questions are unaffected', () => {
+    const [typing] = buildWordTest([word(1, 'documentation', 'документація', { context: 'Read the documentation first.' })], WORDS, { count: 1, kinds: ['typing'] })
+    if (typing.type !== 'gap') throw new Error('gap')
+    expect(typing.typoTolerant).toBe(true)
+    expect(checkAnswer(typing, 'documentaition', { forgiveTypos: true })).toEqual({ correct: true, typo: true })
+    const [cloze] = buildWordTest([word(1, 'documentation', 'документація', { context: 'Read the documentation first.' })], WORDS, { count: 1, kinds: ['cloze'] })
+    if (cloze.type !== 'gap') throw new Error('gap')
+    expect(checkAnswer(cloze, 'documentaton', { forgiveTypos: true }).typo).toBe(true)
+  })
+
   it('typing accepts a verb with or without "to"', () => {
     const [q] = buildWordTest([WORDS[1]], WORDS, { count: 1, kinds: ['typing'] })
     if (q.type !== 'gap') throw new Error('gap')

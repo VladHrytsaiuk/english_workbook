@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: Settings = {
   shuffleQuestions: true,
   shuffleAnswers: true,
   showTopics: false,
+  forgiveTypos: true,
   desiredRetention: 0.9,
   newCardsPerDay: 20,
   reviewsPerDay: 200,

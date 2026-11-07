@@ -131,7 +131,7 @@ function buildOne(e: VocabEntry, kind: Exclude<WordKind, 'match'>, pool: VocabEn
     case 'typing': {
       const bare = text.replace(/^to\s+/i, '')
       const answers = uniq([text, bare, ...(/verb/.test(e.pos ?? '') && !/^to\s/i.test(text) ? [`to ${text}`] : [])])
-      return { type: 'gap', prompt: `Write in English: **${translation}**${pos}`, answers, hint: hintFor(text) }
+      return { type: 'gap', prompt: `Write in English: **${translation}**${pos}`, answers, hint: hintFor(text), typoTolerant: true }
     }
     case 'cloze': {
       for (const s of sentences(e)) {
@@ -139,7 +139,7 @@ function buildOne(e: VocabEntry, kind: Exclude<WordKind, 'match'>, pool: VocabEn
         if (!c) continue
         const form = s.slice(c.before.length, s.length - c.after.length)
         const answers = uniq([form, text, text.replace(/^to\s+/i, '')])
-        return { type: 'gap', prompt: `${c.before}___${c.after}  *(= ${translation})*`, answers, hint: hintFor(form) }
+        return { type: 'gap', prompt: `${c.before}___${c.after}  *(= ${translation})*`, answers, hint: hintFor(form), typoTolerant: true }
       }
       return null
     }

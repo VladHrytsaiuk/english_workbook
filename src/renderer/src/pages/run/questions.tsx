@@ -185,7 +185,9 @@ const textState = (locked: boolean, result?: CheckResult): string =>
   !locked
     ? 'border-input focus:border-primary focus:ring-2 focus:ring-primary/20'
     : result?.correct
-      ? 'border-success/70 bg-success/10 text-foreground'
+      ? result.typo
+        ? 'border-amber-500/70 bg-amber-500/10 text-foreground'
+        : 'border-success/70 bg-success/10 text-foreground'
       : 'border-destructive/70 bg-destructive/10 text-foreground'
 
 export function GapView({ q, itemKey, value, onChange, locked, result }: QProps<TextQuestion>) {

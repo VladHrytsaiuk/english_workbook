@@ -1,5 +1,5 @@
 import { type Card, createEmptyCard, fsrs, generatorParameters, type Grade } from 'ts-fsrs'
-import { normalizeAnswer } from './answer'
+import type { TypedVerdict } from './answer'
 import type { SrsCard, SrsGrade, VocabEntry } from './types'
 
 // ───────────── conversion between ts-fsrs Card and JSON-friendly SrsCard ─────────────
@@ -93,35 +93,7 @@ export function isDifficult(e: Pick<VocabEntry, 'srs'>): boolean {
 
 // ───────────── typed answers ─────────────
 
-/** Edit distance where swapping two neighbouring letters counts as one edit (optimal string alignment). */
-function editDistance(a: string, b: string): number {
-  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)))
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1
-      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1)
-    }
-  }
-  return d[a.length][b.length]
-}
-
-export type TypedVerdict = 'correct' | 'typo' | 'wrong'
-
-/**
- * Compares a typed word/phrase with the card text. Case, spacing, apostrophes and final punctuation
- * are ignored, and a leading "to " on verbs is optional. One slip (a wrong, missing or swapped letter) counts as a
- * "typo" for words of 5+ letters, two slips for phrases over 10 letters; short words must be exact (take ≠ make).
- */
-export function checkTyped(input: string, target: string): TypedVerdict {
-  const strip = (s: string): string => normalizeAnswer(s).replace(/^to\s+/, '')
-  const a = strip(input)
-  const b = strip(target)
-  if (!a) return 'wrong'
-  if (a === b) return 'correct'
-  const allowed = b.length > 10 ? 2 : b.length >= 5 ? 1 : 0
-  return editDistance(a, b) <= allowed ? 'typo' : 'wrong'
-}
+export { checkTyped, type TypedVerdict } from './answer'
 
 /** Suggested FSRS grade for an automatically checked answer. */
 export function suggestedGrade(verdict: TypedVerdict): SrsGrade {

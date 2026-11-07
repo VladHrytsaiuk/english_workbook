@@ -105,7 +105,7 @@ export function RunPage({ session }: { session: RunSession }) {
     if (!item || locked) return
     const value = answers[item.key]
     if (!giveUp && !isReady(item, value)) return
-    const r = giveUp ? { correct: false } : checkAnswer(item, value as UserAnswer)
+    const r = giveUp ? { correct: false } : checkAnswer(item, value as UserAnswer, { forgiveTypos: settings?.forgiveTypos ?? true })
     setGraded((g) => ({ ...g, [item.key]: r }))
   }
 
@@ -303,20 +303,21 @@ function PassagePane({ passage, sessionTitle }: { passage: ReadingPassage; sessi
 
 function Feedback({ item, result, answer, onOverride }: { item: TestItem; result: Graded; answer: UserAnswer | undefined; onOverride(): void }) {
   const ok = result.correct
-  const showCorrect = !ok && item.type !== 'match'
+  const typo = ok && Boolean(result.typo)
+  const showCorrect = (!ok && item.type !== 'match') || typo
   const canOverride = !ok && TYPED.has(item.type) && typeof answer === 'string' && answer.trim().length > 0
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={cn('mt-7 overflow-hidden rounded-2xl border', ok ? 'border-success/30 bg-success/[0.06]' : 'border-destructive/30 bg-destructive/[0.05]')}
+      className={cn('mt-7 overflow-hidden rounded-2xl border', typo ? 'border-amber-500/40 bg-amber-500/[0.07]' : ok ? 'border-success/30 bg-success/[0.06]' : 'border-destructive/30 bg-destructive/[0.05]')}
     >
       <div className="flex items-center gap-2.5 px-5 pt-4">
-        <span className={cn('flex size-6 items-center justify-center rounded-full', ok ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground')}>
+        <span className={cn('flex size-6 items-center justify-center rounded-full', typo ? 'bg-amber-500 text-white' : ok ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground')}>
           {ok ? <Check className="size-3.5" strokeWidth={3} /> : <X className="size-3.5" strokeWidth={3} />}
         </span>
-        <span className="text-[15px] font-semibold">{ok ? (result.overridden ? 'Counted as correct' : 'Correct!') : 'Not quite'}</span>
+        <span className="text-[15px] font-semibold">{typo ? 'Correct — mind the spelling' : ok ? (result.overridden ? 'Counted as correct' : 'Correct!') : 'Not quite'}</span>
         {result.partial && !ok && (
           <span className="text-[13px] text-muted-foreground">
             {result.partial.right} of {result.partial.total} pairs right
@@ -331,14 +332,14 @@ function Feedback({ item, result, answer, onOverride }: { item: TestItem; result
       <div className="selectable space-y-3 px-5 pb-5 pt-3">
         {showCorrect && (
           <div className="text-[14px]">
-            <span className="text-muted-foreground">Correct answer: </span>
+            <span className="text-muted-foreground">{typo ? 'Correct spelling: ' : 'Correct answer: '}</span>
             <span className="font-semibold text-success">
               {'answers' in item ? item.answers.join('  ·  ') : formatCorrectAnswer(item)}
             </span>
             {TYPED.has(item.type) && typeof answer === 'string' && answer.trim() && (
               <div className="mt-1">
                 <span className="text-muted-foreground">Your answer: </span>
-                <span className="line-through decoration-destructive/60">{answer}</span>
+                <span className={typo ? 'line-through decoration-amber-500/70' : 'line-through decoration-destructive/60'}>{answer}</span>
               </div>
             )}
           </div>

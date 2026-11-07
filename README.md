@@ -177,6 +177,10 @@ question types: choose the translation, choose the English word, write it in Eng
 (5 pairs per 8 words). Difficult words come up more often. Results, the per-topic breakdown (*Vocabulary · Work*…) and
 the mistakes bank work as in any test, but a word test never changes the review schedule.
 
+In the "write it in English" and "fill the gap" questions one spelling slip in a word of 5+ letters still counts
+(*documentaition* → *documentation*; the right spelling is shown), switchable in Settings → Tests. Grammar tests stay
+exact: *has* and *had* differ by one letter, so typos are never forgiven there.
+
 **Reading with gaps** is a second format: AI writes a short text that uses 4, 6 or 8 of your words once each, and you put
 every word into its gap from a word bank (with one or two extra words that don't fit). Without a key or internet the
 exercise is built from the sentences you saved with the words.

@@ -943,3 +943,43 @@ scenarios.readingoffline = async ({ page, shot }) => {
   const info = await page.evaluate(() => document.querySelector('main')?.innerText.slice(0, 700))
   console.log('offline reading screen:\n' + info)
 }
+
+scenarios.typo = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  await page.evaluate(async () => {
+    const mk = async (text, translation, context) => {
+      const e = await window.api.vocab.add({ id: crypto.randomUUID(), text, translation, context, source: { kind: 'other', title: 'x' }, createdAt: new Date().toISOString() })
+      await window.api.vocab.review(e.id, 3, 'flashcard', 900)
+    }
+    await mk('documentation', 'документація', 'Read the documentation first.')
+    await mk('deadline', 'кінцевий термін', 'We have to meet the deadline by Friday.')
+    await mk('reliable', 'надійний', 'She is a very reliable colleague.')
+    await mk('commute', 'дорога на роботу', 'My daily commute takes an hour.')
+    await mk('appointment', 'запис, зустріч', 'I have a dentist appointment at 3 pm.')
+  })
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(500)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  await sleep(400)
+  for (const k of ['Choose the translation', 'Choose the English word', 'Fill the gap', 'Build the sentence', 'Match pairs']) await page.getByRole('button', { name: new RegExp('^' + k) }).click()
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(700)
+  const answers = { 'документація': 'documentaition', 'кінцевий термін': 'dedline', 'надійний': 'relable', 'дорога на роботу': 'comute', 'запис, зустріч': 'apointment' }
+  for (let i = 0; i < 5; i++) {
+    const prompt = await page.locator('main p').first().textContent()
+    const key = Object.keys(answers).find((k) => prompt?.includes(k))
+    await page.keyboard.type(answers[key])
+    await press(page, 'Enter')
+    await sleep(350)
+    if (i === 0) await shot('typo-feedback')
+    await press(page, 'Enter')
+    await sleep(250)
+  }
+  await sleep(700)
+  const a = await page.evaluate(async () => (await window.api.progress.attempts()).at(-1))
+  console.log('typed with one slip each → score', a.correct + '/' + a.total)
+  // Same slips with the setting off must be wrong
+  await page.evaluate(() => window.api.settings.update({ forgiveTypos: false }))
+}

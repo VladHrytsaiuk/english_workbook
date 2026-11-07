@@ -38,6 +38,8 @@ export interface TextQuestion extends QuestionBase {
   type: 'gap' | 'transform' | 'error'
   /** All accepted answers (the `|` alternatives). The first one is the "main" answer. */
   answers: string[]
+  /** A spelling slip counts as correct (vocabulary questions; grammar tests stay exact). */
+  typoTolerant?: boolean
 }
 
 export interface OrderQuestion extends QuestionBase {
@@ -120,6 +122,8 @@ export type UserAnswer = string | number[]
 
 export interface CheckResult {
   correct: boolean
+  /** Counted as correct despite a small spelling slip (the right spelling is shown). */
+  typo?: boolean
   /** For match questions: how many pairs were right. */
   partial?: { right: number; total: number }
 }
@@ -257,6 +261,8 @@ export interface Settings {
   shuffleAnswers: boolean
   /** Show a question's topic before it is answered (it can give the answer away). */
   showTopics: boolean
+  /** A one-letter spelling slip in a vocabulary question counts as correct. */
+  forgiveTypos: boolean
   /** FSRS target probability of remembering a card when it is due (0.8–0.97). */
   desiredRetention: number
   newCardsPerDay: number

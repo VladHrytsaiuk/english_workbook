@@ -65,3 +65,33 @@ describe('checkAnswer', () => {
     expect(checkAnswer(q, [1, 0]).correct).toBe(true)
   })
 })
+
+describe('typo tolerance (vocabulary spelling questions only)', () => {
+  const vocab: TextQuestion = { ...base, type: 'gap', answers: ['documentation'], typoTolerant: true }
+  const grammar: TextQuestion = { ...base, type: 'gap', answers: ['has lived'] }
+  const opts = { forgiveTypos: true }
+
+  it('accepts one slip in a long word and says it was a typo', () => {
+    expect(checkAnswer(vocab, 'documentaition', opts)).toEqual({ correct: true, typo: true }) // extra letter
+    expect(checkAnswer(vocab, 'documentaton', opts)).toEqual({ correct: true, typo: true }) // missing letter
+    expect(checkAnswer(vocab, 'documnetation', opts)).toEqual({ correct: true, typo: true }) // swapped letters
+  })
+  it('an exact answer is a plain correct answer, not a typo', () => {
+    expect(checkAnswer(vocab, 'Documentation', opts)).toEqual({ correct: true })
+  })
+  it('still rejects real mistakes and short words', () => {
+    expect(checkAnswer(vocab, 'document', opts).correct).toBe(false)
+    expect(checkAnswer(vocab, 'documentari', opts).correct).toBe(false)
+    const short: TextQuestion = { ...base, type: 'gap', answers: ['take'], typoTolerant: true }
+    expect(checkAnswer(short, 'make', opts).correct).toBe(false)
+  })
+  it('is off when the setting is off', () => {
+    expect(checkAnswer(vocab, 'documentaition').correct).toBe(false)
+    expect(checkAnswer(vocab, 'documentaition', { forgiveTypos: false }).correct).toBe(false)
+  })
+  it('never applies to grammar questions: has / had differ by one letter', () => {
+    expect(checkAnswer(grammar, 'had lived', opts).correct).toBe(false)
+    expect(checkAnswer(grammar, 'has livd', opts).correct).toBe(false)
+    expect(checkAnswer(grammar, 'has lived', opts).correct).toBe(true)
+  })
+})

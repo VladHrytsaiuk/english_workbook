@@ -225,6 +225,9 @@ export function SettingsPage() {
             <Row label="Shuffle answer options" description="The right option moves around, whatever order the file lists them in.">
               <Switch checked={settings.shuffleAnswers} onCheckedChange={(shuffleAnswers) => void updateSettings({ shuffleAnswers })} />
             </Row>
+            <Row label="Forgive small typos in word tests" description="One wrong, missing or extra letter in a vocabulary spelling question still counts as correct (you see the right spelling). Grammar tests stay exact.">
+              <Switch checked={settings.forgiveTypos} onCheckedChange={(forgiveTypos) => void updateSettings({ forgiveTypos })} />
+            </Row>
             <Row label="Show topic before answering" description="The topic (e.g. “Present Continuous”) is a strong hint, so by default it appears after you answer.">
               <Switch checked={settings.showTopics} onCheckedChange={(showTopics) => void updateSettings({ showTopics })} />
             </Row>

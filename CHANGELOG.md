@@ -4,6 +4,14 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.4.1] — 2026-11-07
+
+### Changed
+- **Small typos are forgiven in word tests.** In the "write it in English" and "fill the gap" questions of a word test, one
+  wrong, missing, extra or swapped letter in a word of 5+ letters (*documentaition* → *documentation*) counts as correct
+  and shows the right spelling in an amber note. Grammar tests are unchanged and stay exact (*has* ≠ *had*).
+  Settings → Tests → *Forgive small typos in word tests* (on by default).
+
 ## [1.4.0] — 2026-11-07
 
 ### Added
