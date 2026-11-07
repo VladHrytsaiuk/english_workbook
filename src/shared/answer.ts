@@ -70,12 +70,14 @@ export type TypedVerdict = 'correct' | 'typo' | 'wrong'
  * are ignored, and a leading "to " on verbs is optional. One slip (a wrong, missing or swapped letter) counts as a
  * "typo" for words of 5+ letters, two slips for phrases over 10 letters; short words must be exact (take ≠ make).
  */
-export function checkTyped(input: string, target: string): TypedVerdict {
+export function checkTyped(input: string, target: string, otherForms: string[] = []): TypedVerdict {
   const strip = (s: string): string => normalizeAnswer(s).replace(/^to\s+/, '')
   const a = strip(input)
   const b = strip(target)
   if (!a) return 'wrong'
   if (a === b) return 'correct'
+  // A different real form of the word ("give up" for "gave up") is a grammar mistake, not a typo.
+  if (otherForms.some((f) => strip(f) === a)) return 'wrong'
   const allowed = b.length > 10 ? 2 : b.length >= 5 ? 1 : 0
   return editDistance(a, b) <= allowed ? 'typo' : 'wrong'
 }
@@ -91,7 +93,7 @@ export function checkAnswer(q: SimpleQuestion, answer: UserAnswer, opts: { forgi
       if (matchesAny(answer, q.answers)) return { correct: true }
       // Vocabulary spelling questions only: one slip in a word of 5+ letters still counts (grammar stays exact: has ≠ had).
       if (opts.forgiveTypos && q.typoTolerant) {
-        const verdicts = q.answers.map((a) => checkTyped(answer, a))
+        const verdicts = q.answers.map((a) => checkTyped(answer, a, q.otherForms))
         if (verdicts.includes('correct')) return { correct: true }
         if (verdicts.includes('typo')) return { correct: true, typo: true }
       }

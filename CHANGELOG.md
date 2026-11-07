@@ -4,6 +4,23 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.5.0] — 2026-11-08
+
+### Added
+- **Grammatical forms of your words.** The gap finder now recognises other forms of a saved word, so "give up" is found in
+  "She is giving up", "He gave up" and "They have given up" (regular endings by rule, ~110 common irregular verbs listed).
+- **Use the right form** (new word-test question type): a sentence with a gap and the base word in brackets — *"He ___
+  smoking last year. (give up — здаватися)"* — where only the exact form that fits is accepted (*gave up*), not the base
+  word. It uses the sentences saved with the word (the ones from "Fill with AI" are especially good for this).
+- **Reading with gaps → "Typing the right form"**: the text shows the base word in brackets after each gap and you type
+  the correct form (*(give up)* → *giving up*), instead of choosing from a word bank.
+
+### Changed
+- "Fill the gap" and the cloze cards in review also work with inflected forms: when the sentence has another form, the base
+  word is shown in brackets and that exact form is required.
+- A different real form of the word is **never forgiven as a typo**: *give up* instead of *gave up* differ by one letter
+  but are a grammar mistake. Typo tolerance only applies to genuine spelling slips.
+
 ## [1.4.1] — 2026-11-07
 
 ### Changed

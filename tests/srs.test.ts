@@ -75,6 +75,11 @@ describe('checkTyped', () => {
     expect(checkTyped('look forwrd too', 'look forward to')).toBe('typo') // two slips in a long phrase
     expect(suggestedGrade('typo')).toBe(2)
   })
+  it('a different real form of the word is wrong, not a typo (gave / give differ by one letter)', () => {
+    expect(checkTyped('give up', 'gave up')).toBe('typo') // without the form list it looks like a slip
+    expect(checkTyped('give up', 'gave up', ['give up', 'giving up'])).toBe('wrong')
+    expect(checkTyped('gave up', 'gave up', ['give up'])).toBe('correct')
+  })
   it('rejects different words', () => {
     expect(checkTyped('take', 'make')).toBe('wrong') // short words must be exact
     expect(checkTyped('recieved', 'receive')).toBe('wrong')
@@ -83,21 +88,42 @@ describe('checkTyped', () => {
   })
 })
 
+describe('makeCloze finds other grammatical forms of a saved word', () => {
+  it('regular and irregular forms of a phrasal verb', () => {
+    expect(makeCloze('She is giving up on her dreams.', 'give up')).toEqual({ before: 'She is ', after: ' on her dreams.', form: 'giving up', inflected: true })
+    expect(makeCloze('He gave up too early.', 'to give up')).toMatchObject({ before: 'He ', form: 'gave up', inflected: true })
+    expect(makeCloze('They have given up.', 'give up')).toMatchObject({ form: 'given up', inflected: true })
+    expect(makeCloze('She gives up easily.', 'give up')).toMatchObject({ form: 'gives up', inflected: true })
+  })
+  it('regular verbs, nouns and spelling changes', () => {
+    expect(makeCloze('We were stopping the car.', 'stop')).toMatchObject({ form: 'stopping', inflected: true })
+    expect(makeCloze('He studied all night.', 'study')).toMatchObject({ form: 'studied', inflected: true })
+    expect(makeCloze('Two dentist appointments were cancelled.', 'dentist appointment')).toMatchObject({ before: 'Two ', form: 'dentist appointments', inflected: true })
+  })
+  it('the saved form is preferred and is not "inflected"', () => {
+    expect(makeCloze('I will not give up.', 'give up')).toMatchObject({ form: 'give up', inflected: false })
+  })
+  it('does not match inside another word', () => {
+    expect(makeCloze('He is a forgiving man.', 'give')).toBeNull()
+    expect(makeCloze('The gift is nice.', 'give')).toBeNull()
+  })
+})
+
 describe('makeCloze', () => {
   it('blanks the word in its sentence, case-insensitively', () => {
-    expect(makeCloze('The museum was Renovated last year.', 'renovated')).toEqual({ before: 'The museum was ', after: ' last year.' })
+    expect(makeCloze('The museum was Renovated last year.', 'renovated')).toMatchObject({ before: 'The museum was ', after: ' last year.' })
   })
   it('matches multi-word phrases across extra spaces', () => {
-    expect(makeCloze('I really look  forward to it.', 'look forward to')).toEqual({ before: 'I really ', after: ' it.' })
+    expect(makeCloze('I really look  forward to it.', 'look forward to')).toMatchObject({ before: 'I really ', after: ' it.' })
   })
   it('does not match inside other words', () => {
     expect(makeCloze('The carpet is red.', 'pet')).toBeNull()
   })
   it('finds a saved verb phrase or noun without its leading "to" / article', () => {
-    expect(makeCloze("Don't give up on your dreams.", 'to give up')).toEqual({ before: "Don't ", after: ' on your dreams.' })
-    expect(makeCloze('We met the deadline.', 'the deadline')).toEqual({ before: 'We met ', after: '.' }) // full form found
-    expect(makeCloze('We met a deadline.', 'the deadline')).toEqual({ before: 'We met a ', after: '.' }) // only the bare word is there
-    expect(makeCloze('I want to give up.', 'to give up')).toEqual({ before: 'I want ', after: '.' }) // the full form still wins
+    expect(makeCloze("Don't give up on your dreams.", 'to give up')).toMatchObject({ before: "Don't ", after: ' on your dreams.' })
+    expect(makeCloze('We met the deadline.', 'the deadline')).toMatchObject({ before: 'We met ', after: '.' }) // full form found
+    expect(makeCloze('We met a deadline.', 'the deadline')).toMatchObject({ before: 'We met a ', after: '.' }) // only the bare word is there
+    expect(makeCloze('I want to give up.', 'to give up')).toMatchObject({ before: 'I want ', after: '.' }) // the full form still wins
   })
   it('returns null without context', () => {
     expect(makeCloze(undefined, 'word')).toBeNull()

@@ -181,6 +181,12 @@ In the "write it in English" and "fill the gap" questions one spelling slip in a
 (*documentaition* → *documentation*; the right spelling is shown), switchable in Settings → Tests. Grammar tests stay
 exact: *has* and *had* differ by one letter, so typos are never forgiven there.
 
+**Grammar forms.** Gaps recognise other forms of a saved word: "give up" is found in *"She is giving up"* / *"He gave up"*.
+The **Use the right form** question shows the base word in brackets (*"He ___ smoking last year. (give up)"*) and accepts
+only the exact form (*gave up*) — the base word is a grammar mistake, never a "typo". In *Reading with gaps* you can choose
+**Typing the right form** instead of the word bank. The more varied sentences a word has (*Fill with AI* adds examples with
+different forms), the better this works.
+
 **Reading with gaps** is a second format: AI writes a short text that uses 4, 6 or 8 of your words once each, and you put
 every word into its gap from a word bank (with one or two extra words that don't fit). Without a key or internet the
 exercise is built from the sentences you saved with the words.

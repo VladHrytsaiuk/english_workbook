@@ -40,6 +40,8 @@ export interface TextQuestion extends QuestionBase {
   answers: string[]
   /** A spelling slip counts as correct (vocabulary questions; grammar tests stay exact). */
   typoTolerant?: boolean
+  /** Other real forms of the same word (give up / gave up / giving up): typing one of them is a wrong form, not a typo. */
+  otherForms?: string[]
 }
 
 export interface OrderQuestion extends QuestionBase {

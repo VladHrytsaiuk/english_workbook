@@ -983,3 +983,104 @@ scenarios.typo = async ({ page, shot }) => {
   // Same slips with the setting off must be wrong
   await page.evaluate(() => window.api.settings.update({ forgiveTypos: false }))
 }
+
+scenarios.forms = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  await page.evaluate(async () => {
+    const mk = async (text, translation, context, examples) => {
+      const e = await window.api.vocab.add({ id: crypto.randomUUID(), text, translation, context, examples, source: { kind: 'other', title: 'x' }, createdAt: new Date().toISOString() })
+      await window.api.vocab.review(e.id, 3, 'flashcard', 900)
+    }
+    await mk('to give up', 'здаватися', "Don't give up on your dreams.", ['She is giving up her job.', 'He gave up smoking last year.'])
+    await mk('deadline', 'кінцевий термін', 'We have to meet the deadline by Friday.')
+    await mk('reliable', 'надійний', 'She is a very reliable colleague.')
+    await mk('commute', 'дорога на роботу', 'My daily commute takes an hour.')
+    await mk('appointment', 'запис, зустріч', 'I have a dentist appointment at 3 pm.')
+  })
+  const openDialog = async () => {
+    await page.getByRole('button', { name: /^Notes/ }).click()
+    await sleep(250)
+    await page.getByRole('button', { name: /^Vocabulary/ }).click()
+    await sleep(500)
+    await page.getByRole('button', { name: 'Test', exact: true }).click()
+    await sleep(400)
+  }
+  const onlyForm = async () => {
+    for (const k of ['Choose the translation', 'Choose the English word', 'Write it in English', 'Fill the gap', 'Build the sentence', 'Match pairs']) await page.getByRole('button', { name: new RegExp('^' + k) }).click()
+  }
+  // 1. wrong form (the base word)
+  await openDialog()
+  await shot('dialog-with-form-kind')
+  await onlyForm()
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(700)
+  const prompt1 = await page.locator('main .selectable').first().textContent()
+  console.log('prompt 1:', prompt1)
+  await page.keyboard.type('give up')
+  await press(page, 'Enter')
+  await sleep(400)
+  await shot('base-form-is-wrong')
+  const a1 = await page.evaluate(async () => (await window.api.progress.attempts()).length)
+  await press(page, 'Enter')
+  await sleep(700)
+  const r1 = await page.evaluate(async () => (await window.api.progress.attempts()).at(-1))
+  console.log('typing the base form "give up" →', r1.correct + '/' + r1.total, '(expected 0/1)')
+  await press(page, 'Escape')
+  // 2. correct form
+  await openDialog()
+  await onlyForm()
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(700)
+  const prompt2 = (await page.locator('main .selectable').first().textContent()) ?? ''
+  const right = prompt2.includes('smoking') ? 'gave up' : 'giving up'
+  console.log('prompt 2:', prompt2, '→ typing', right)
+  await page.keyboard.type(right)
+  await press(page, 'Enter')
+  await sleep(400)
+  await shot('right-form')
+  await press(page, 'Enter')
+  await sleep(700)
+  const r2 = await page.evaluate(async () => (await window.api.progress.attempts()).at(-1))
+  console.log('typing the right form →', r2.correct + '/' + r2.total, '(expected 1/1)')
+  await press(page, 'Escape')
+  // 3. reading with typed forms (fake AI text)
+  await openDialog()
+  await page.getByRole('button', { name: 'Reading with gaps' }).click()
+  await sleep(300)
+  await page.getByRole('button', { name: /^Typing the right form/ }).click()
+  await shot('dialog-reading-typed')
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(1200)
+  await shot('reading-typed-question')
+}
+
+scenarios.typedvalue = async ({ page }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape')
+  await page.evaluate(async () => {
+    const mk = async (text, translation, context, examples) => {
+      const e = await window.api.vocab.add({ id: crypto.randomUUID(), text, translation, context, examples, source: { kind: 'other', title: 'x' }, createdAt: new Date().toISOString() })
+      await window.api.vocab.review(e.id, 3, 'flashcard', 900)
+    }
+    await mk('to give up', 'здаватися', "Don't give up on your dreams.", ['She is giving up her job.', 'He gave up smoking last year.'])
+    await mk('deadline', 'кінцевий термін', 'We have to meet the deadline by Friday.')
+    await mk('reliable', 'надійний', 'She is a very reliable colleague.')
+    await mk('commute', 'дорога на роботу', 'My daily commute takes an hour.')
+    await mk('appointment', 'запис, зустріч', 'I have a dentist appointment at 3 pm.')
+  })
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(500)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  await sleep(400)
+  for (const k of ['Choose the translation', 'Choose the English word', 'Write it in English', 'Fill the gap', 'Build the sentence', 'Match pairs']) await page.getByRole('button', { name: new RegExp('^' + k) }).click()
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(900)
+  const before = await page.locator('main input').inputValue()
+  await page.keyboard.type('give up')
+  await sleep(200)
+  const after = await page.locator('main input').inputValue()
+  console.log(`input before typing: "${before}"  after typing "give up": "${after}"`)
+}

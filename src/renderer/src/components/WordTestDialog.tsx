@@ -57,6 +57,7 @@ export function WordTestDialog({
   const [source, setSource] = useState<Source>('studying')
   const [count, setCount] = useState(10)
   const [kinds, setKinds] = useState<Set<WordKind>>(new Set(ALL_KINDS_FOR_TEST))
+  const [typed, setTyped] = useState(false)
   const [busy, setBusy] = useState(false)
   const [wasOpen, setWasOpen] = useState(false)
 
@@ -84,6 +85,7 @@ export function WordTestDialog({
       setCount(10)
       setKinds(new Set(ALL_KINDS_FOR_TEST))
       setBusy(false)
+      setTyped(false)
     }
   }
 
@@ -114,11 +116,11 @@ export function WordTestDialog({
     setBusy(true)
     const chosen = pickWords(list, count)
     const r = await window.api.vocab.readingText(chosen.map((w) => w.id))
-    let items: TestItem[] = r.ok ? buildReadingTest(chosen, r, pool, { title }) : []
+    let items: TestItem[] = r.ok ? buildReadingTest(chosen, r, pool, { title, typed }) : []
     if (!items.length) {
       // No AI (no key / offline / bad answer): use the sentences where the words were met, taking words that have one.
       const withSentence = pickWords(list.filter(hasGapSentence), count)
-      items = buildSentenceGapTest(withSentence, pool, { title })
+      items = buildSentenceGapTest(withSentence, pool, { title, typed })
       if (!items.length) {
         setBusy(false)
         return toast(r.ok ? 'These words have no saved sentences to build a text from.' : `${r.message} Add example sentences to your words to use the offline version.`, 'error')
@@ -254,10 +256,32 @@ export function WordTestDialog({
                 </div>
               </div>
             ) : (
-              <p className="rounded-lg bg-muted/50 px-3 py-2.5 text-[12.5px] leading-relaxed text-muted-foreground">
-                AI writes a short text that uses your words, and you put each word into its gap from a word bank — the words in a new context, not the sentences you
-                already know. Without a key or internet the exercise is built from the sentences you saved with the words.
-              </p>
+              <div className="grid gap-3">
+                <div>
+                  <div className={caption}>You answer by</div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {(
+                      [
+                        [false, 'Choosing from a word bank', 'Put each word into its gap'],
+                        [true, 'Typing the right form', 'Base word in brackets: give up → is giving up']
+                      ] as const
+                    ).map(([t, label, hint]) => (
+                      <button
+                        key={label}
+                        onClick={() => setTyped(t)}
+                        className={cn('rounded-lg border px-3 py-2 text-left transition-colors', typed === t ? 'border-primary bg-primary/[0.06] ring-1 ring-primary' : 'hover:border-foreground/20')}
+                      >
+                        <span className="block text-[12.5px] font-medium leading-tight">{label}</span>
+                        <span className="block text-[11px] leading-tight text-muted-foreground">{hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="rounded-lg bg-muted/50 px-3 py-2.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                  AI writes a short text that uses your words — in a new context, not the sentences you already know. Without a key or internet the exercise is built from
+                  the sentences you saved with the words.
+                </p>
+              </div>
             )}
           </div>
         )}

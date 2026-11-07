@@ -1,5 +1,6 @@
 import { type Card, createEmptyCard, fsrs, generatorParameters, type Grade } from 'ts-fsrs'
 import type { TypedVerdict } from './answer'
+import { phraseForms } from './inflect'
 import type { SrsCard, SrsGrade, VocabEntry } from './types'
 
 // ───────────── conversion between ts-fsrs Card and JSON-friendly SrsCard ─────────────
@@ -102,18 +103,29 @@ export function suggestedGrade(verdict: TypedVerdict): SrsGrade {
 
 /**
  * Replaces the word inside its context sentence with a gap. Returns null when the word isn't found.
- * A leading "to" / article of the saved word is optional ("to give up" is found in "Don't give up").
+ * - A leading "to" / article of the saved word is optional ("to give up" is found in "Don't give up").
+ * - Other grammatical forms are found too ("give up" in "She is giving up", "He gave up"); then `inflected` is true
+ *   and `form` is the exact text that stood in the sentence — that is what the learner has to type.
  */
-export function makeCloze(context: string | undefined, text: string): { before: string; after: string } | null {
+export function makeCloze(context: string | undefined, text: string): { before: string; after: string; form: string; inflected: boolean } | null {
   if (!context) return null
   const full = text.trim()
   const bare = full.replace(/^(to|a|an|the)\s+(?=\S)/i, '')
-  for (const candidate of bare === full ? [full] : [full, bare]) {
-    const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')
-    const m = new RegExp(`(^|[^\\p{L}])(${escaped})(?=[^\\p{L}]|$)`, 'iu').exec(context)
+  const search = (candidates: string[]): RegExpExecArray | null => {
+    const alternatives = [...new Set(candidates)]
+      .sort((x, y) => y.length - x.length)
+      .map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+    return new RegExp(`(^|[^\\p{L}])(${alternatives.join('|')})(?=[^\\p{L}]|$)`, 'iu').exec(context)
+  }
+  // The saved form first, then every other form of the word.
+  for (const [candidates, inflected] of [
+    [bare === full ? [full] : [full, bare], false],
+    [phraseForms(bare), true]
+  ] as const) {
+    const m = search([...candidates])
     if (m) {
       const start = m.index + m[1].length
-      return { before: context.slice(0, start), after: context.slice(start + m[2].length) }
+      return { before: context.slice(0, start), after: context.slice(start + m[2].length), form: m[2], inflected: inflected && m[2].toLowerCase().replace(/\s+/g, ' ') !== bare.toLowerCase().replace(/\s+/g, ' ') }
     }
   }
   return null

@@ -36,7 +36,7 @@ const WORDS: VocabEntry[] = [
   word(10, 'although', 'хоча', { pos: 'conjunction', context: 'Although it was raining, we went for a walk.' })
 ]
 
-const ALL: WordKind[] = ['translate', 'reverse', 'typing', 'cloze', 'order', 'match']
+const ALL: WordKind[] = ['translate', 'reverse', 'typing', 'cloze', 'form', 'order', 'match']
 const seeded = (seed: number) => () => {
   seed = (seed + 0x6d2b79f5) | 0
   let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
@@ -331,5 +331,86 @@ describe('buildSentenceGapTest (offline version)', () => {
   it('needs at least three words with a saved sentence', () => {
     const two = [WORDS[0], WORDS[1], WORDS[4]]
     expect(buildSentenceGapTest(two, WORDS)).toEqual([])
+  })
+})
+
+describe('grammatical forms of the word', () => {
+  const give = word(1, 'to give up', 'здаватися', { pos: 'phrasal verb', context: "Don't give up on your dreams.", examples: ['She is giving up her job.', 'He gave up smoking last year.'] })
+  const wordsPlus = [give, ...WORDS.slice(2)]
+
+  it('"use the right form" asks for the exact form from a sentence and shows the base word in brackets', () => {
+    const seen = new Set<string>()
+    for (let seed = 1; seed <= 30; seed++) {
+      const [q] = buildWordTest([give], wordsPlus, { count: 1, kinds: ['form'], rand: seeded(seed) })
+      if (q.type !== 'gap') throw new Error('gap')
+      expect(q.prompt).toContain('___')
+      expect(q.prompt).toContain('*(give up — здаватися)*')
+      expect(q.typoTolerant).toBe(true)
+      seen.add(q.answers[0])
+      // only the form that fits the sentence is accepted — not the base word
+      expect(checkAnswer(q, q.answers[0], { forgiveTypos: true }).correct).toBe(true)
+      expect(checkAnswer(q, 'give up', { forgiveTypos: true }).correct).toBe(false)
+    }
+    expect([...seen].sort()).toEqual(['gave up', 'giving up'])
+  })
+
+  it('typing another real form of the word is a wrong form, never forgiven as a typo (give up / gave up differ by one letter)', () => {
+    const [q] = buildWordTest([give], wordsPlus, { count: 1, kinds: ['typing'] })
+    if (q.type !== 'gap') throw new Error('gap')
+    expect(checkAnswer(q, 'give up', { forgiveTypos: true }).correct).toBe(true)
+    expect(checkAnswer(q, 'gave up', { forgiveTypos: true }).correct).toBe(false)
+    expect(checkAnswer(q, 'giving up', { forgiveTypos: true }).correct).toBe(false)
+    expect(checkAnswer(q, 'giv up', { forgiveTypos: true })).toEqual({ correct: true, typo: true })
+  })
+
+  it('"use the right form" is skipped for a word that only has its saved form in the sentences', () => {
+    const plain = word(1, 'deadline', 'дедлайн', { context: 'We have to meet the deadline by Friday.' })
+    expect(buildWordTest([plain], wordsPlus, { count: 1, kinds: ['form'] })).toEqual([])
+  })
+
+  it('"fill the gap" keeps accepting the saved form for an unchanged sentence, but only the exact form for an inflected one', () => {
+    const base = word(1, 'deadline', 'дедлайн', { context: 'We have to meet the deadline by Friday.' })
+    const [a] = buildWordTest([base], wordsPlus, { count: 1, kinds: ['cloze'] })
+    if (a.type !== 'gap') throw new Error('gap')
+    expect(a.prompt).toContain('*(= дедлайн)*')
+    expect(checkAnswer(a, 'deadline').correct).toBe(true)
+
+    const inflected = word(2, 'to give up', 'здаватися', { context: 'She is giving up her job.' })
+    const [b] = buildWordTest([inflected], wordsPlus, { count: 1, kinds: ['cloze'] })
+    if (b.type !== 'gap') throw new Error('gap')
+    expect(b.answers).toEqual(['giving up'])
+    expect(checkAnswer(b, 'giving up').correct).toBe(true)
+    expect(checkAnswer(b, 'give up').correct).toBe(false)
+  })
+
+  describe('reading with gaps, typing the form', () => {
+    const picked = [WORDS[0], give, WORDS[2]]
+    const text = {
+      title: 'A hard week',
+      passage: 'The {1} was close. Tom was {2} his plan, but a {3} friend helped him.',
+      gaps: [
+        { n: 1, entryId: picked[0].id, form: 'deadline' },
+        { n: 2, entryId: picked[1].id, form: 'giving up' },
+        { n: 3, entryId: picked[2].id, form: 'reliable' }
+      ]
+    }
+    it('shows the base word in brackets after each gap and asks for the form', () => {
+      const items = buildReadingTest(picked, text, WORDS, { typed: true })
+      expect(items).toHaveLength(3)
+      expect(items[1].reading?.passage).toContain('**(2)** \\_\\_\\_\\_\\_\\_ *(give up)*')
+      const q = items[1]
+      if (q.type !== 'gap') throw new Error('gap')
+      expect(q.prompt).toBe('Gap **(2)** — write the correct form of **give up**.')
+      expect(q.answers).toEqual(['giving up'])
+      expect(checkAnswer(q, 'giving up').correct).toBe(true)
+      expect(checkAnswer(q, 'give up').correct).toBe(false)
+      expect(checkAnswer(q, 'giveing up', { forgiveTypos: true })).toEqual({ correct: true, typo: true })
+      expect(q.explain).toContain('Tom was **giving up** his plan')
+    })
+    it('the offline version can be typed too', () => {
+      const items = buildSentenceGapTest([give, WORDS[0], WORDS[2]], WORDS, { typed: true })
+      expect(items.length).toBeGreaterThanOrEqual(3)
+      expect(items.every((i) => i.type === 'gap')).toBe(true)
+    })
   })
 })

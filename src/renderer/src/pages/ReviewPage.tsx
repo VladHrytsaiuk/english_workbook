@@ -9,6 +9,7 @@ import { useKeydown } from '@/hooks/useHotkey'
 import { type Route, useApp } from '@/lib/store'
 import { cn, isTyping, plural, shuffle } from '@/lib/utils'
 import { buildQueue, pickMode, scopeLabel, speak, type VocabScope } from '@/lib/vocab'
+import { phraseForms } from '@shared/inflect'
 import { checkTyped, formatInterval, makeCloze, previewDue, suggestedGrade, type TypedVerdict } from '@shared/srs'
 import type { Deck, ReviewMode, SrsGrade, VocabEntry } from '@shared/types'
 
@@ -125,7 +126,7 @@ export function ReviewPage({ scope, cram, back }: { scope: VocabScope; cram?: bo
     if (!card || phase !== 'question') return
     if (mode === 'typing' || mode === 'cloze') {
       if (!input.trim()) return
-      setVerdict(checkTyped(input, card.text))
+      setVerdict(checkTyped(input, mode === 'cloze' && cloze ? cloze.form : card.text, mode === 'cloze' && cloze?.inflected ? phraseForms(card.text) : []))
       inputRef.current?.blur()
     }
     if (mode === 'choice' && picked === null) return
@@ -285,7 +286,9 @@ export function ReviewPage({ scope, cram, back }: { scope: VocabScope; cram?: bo
                     {cloze.after}
                   </p>
                   <p className="mt-3 text-[14px] text-muted-foreground">
-                    = <span className="font-medium text-foreground">{card.translation}</span>
+                    {cloze.inflected && <span className="mr-1">({card.text.replace(/^to\s+/i, '')}) —</span>}
+                    {!cloze.inflected && '= '}
+                    <span className="font-medium text-foreground">{card.translation}</span>
                   </p>
                 </div>
               )}
@@ -311,7 +314,7 @@ export function ReviewPage({ scope, cram, back }: { scope: VocabScope; cram?: bo
                   }}
                 >
                   <Lightbulb className="size-3.5" />
-                  {hint ? `Starts with “${card.text.slice(0, hint)}” · ${plural(card.text.split(/\s+/).length, 'word')} · more` : 'Hint'}
+                  {hint ? `Starts with “${(cloze ? cloze.form : card.text).slice(0, hint)}” · ${plural((cloze ? cloze.form : card.text).split(/\s+/).length, 'word')} · more` : 'Hint'}
                 </button>
               )}
 

@@ -1,17 +1,19 @@
 import { dedupKey } from './dedup'
+import { phraseForms } from './inflect'
 import { isDifficult, makeCloze, statusOf } from './srs'
 import type { ReadingGapText, SimpleQuestion, TestItem, VocabEntry } from './types'
 
 // Tests built from the learner's own vocabulary. They use the normal test engine (results, mistakes bank,
 // topic breakdown) but never touch the spaced-repetition schedule: this is a check, not a review.
 
-export type WordKind = 'translate' | 'reverse' | 'typing' | 'cloze' | 'order' | 'match'
+export type WordKind = 'translate' | 'reverse' | 'typing' | 'cloze' | 'form' | 'order' | 'match'
 
 export const WORD_KINDS: { id: WordKind; label: string; hint: string }[] = [
   { id: 'translate', label: 'Choose the translation', hint: 'English word → 4 translations' },
   { id: 'reverse', label: 'Choose the English word', hint: 'Translation → 4 English words' },
   { id: 'typing', label: 'Write it in English', hint: 'Type the word from its translation' },
-  { id: 'cloze', label: 'Fill the gap', hint: 'In the sentence where you found the word' },
+  { id: 'cloze', label: 'Fill the gap', hint: 'In a sentence with the word' },
+  { id: 'form', label: 'Use the right form', hint: 'Base word in brackets: give up → is giving up' },
   { id: 'order', label: 'Build the sentence', hint: 'Put the words of an example in order' },
   { id: 'match', label: 'Match pairs', hint: 'One round of 5 words per 8 words' }
 ]
@@ -115,6 +117,26 @@ function explainFor(e: VocabEntry): string {
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 type Draft = DistributiveOmit<SimpleQuestion, 'id' | 'explain' | 'hint' | 'topics' | 'line'> & { hint?: string }
 
+/**
+ * A gap in a sentence that contains the word. When the sentence has another form of it ("is giving up" for "give up")
+ * the base word is shown in brackets and only that exact form is accepted — the learner practises the grammar too.
+ * `onlyInflected` skips sentences where the word stands in its saved form.
+ */
+function gapQuestion(e: VocabEntry, onlyInflected: boolean, rand: Rand): Draft | null {
+  const text = e.text.trim()
+  const translation = e.translation.trim()
+  const base = text.replace(/^to\s+/i, '')
+  // "Right form" varies between the saved sentences (gave up / giving up); "fill the gap" prefers the sentence you saved the word from.
+  for (const s of onlyInflected ? shuffle(sentences(e), rand) : sentences(e)) {
+    const c = makeCloze(s, text)
+    if (!c || (onlyInflected && !c.inflected)) continue
+    const answers = c.inflected ? [c.form] : uniq([c.form, text, base])
+    const note = c.inflected ? `${base} — ${translation}` : `= ${translation}`
+    return { type: 'gap', prompt: `${c.before}___${c.after}  *(${note})*`, answers, hint: hintFor(c.form), typoTolerant: true, otherForms: phraseForms(base) }
+  }
+  return null
+}
+
 function buildOne(e: VocabEntry, kind: Exclude<WordKind, 'match'>, pool: VocabEntry[], rand: Rand): Draft | null {
   const text = e.text.trim()
   const translation = e.translation.trim()
@@ -131,18 +153,12 @@ function buildOne(e: VocabEntry, kind: Exclude<WordKind, 'match'>, pool: VocabEn
     case 'typing': {
       const bare = text.replace(/^to\s+/i, '')
       const answers = uniq([text, bare, ...(/verb/.test(e.pos ?? '') && !/^to\s/i.test(text) ? [`to ${text}`] : [])])
-      return { type: 'gap', prompt: `Write in English: **${translation}**${pos}`, answers, hint: hintFor(text), typoTolerant: true }
+      return { type: 'gap', prompt: `Write in English: **${translation}**${pos}`, answers, hint: hintFor(text), typoTolerant: true, otherForms: phraseForms(bare) }
     }
-    case 'cloze': {
-      for (const s of sentences(e)) {
-        const c = makeCloze(s, text)
-        if (!c) continue
-        const form = s.slice(c.before.length, s.length - c.after.length)
-        const answers = uniq([form, text, text.replace(/^to\s+/i, '')])
-        return { type: 'gap', prompt: `${c.before}___${c.after}  *(= ${translation})*`, answers, hint: hintFor(form), typoTolerant: true }
-      }
-      return null
-    }
+    case 'cloze':
+      return gapQuestion(e, false, rand)
+    case 'form':
+      return gapQuestion(e, true, rand)
     case 'order': {
       const usable = sentences(e)
         .filter((s) => {
@@ -174,6 +190,7 @@ function kindWeight(e: VocabEntry, kind: WordKind): number {
     translate: [3, 1],
     reverse: [2, 1],
     cloze: [1.5, 3],
+    form: [0.5, 2.5],
     typing: [0.5, 2],
     order: [0.5, 1]
   }
@@ -272,6 +289,8 @@ export function hasGapSentence(e: VocabEntry): boolean {
 export interface ReadingGapOptions {
   rand?: Rand
   title?: string
+  /** Type the right grammatical form of the word shown in brackets, instead of picking a word from a bank. */
+  typed?: boolean
 }
 
 const GAP_MARK = '\\_\\_\\_\\_\\_\\_' // escaped underscores, so Markdown shows a plain blank
@@ -296,7 +315,11 @@ export function buildReadingTest(entries: VocabEntry[], text: ReadingGapText, po
   const gaps = text.gaps.filter((g) => byId.has(g.entryId) && g.form.trim()).sort((a, b) => a.n - b.n)
   if (gaps.length < 2) return []
   const title = opts.title ?? 'Word test · Reading'
-  const passage = text.passage.replace(/\{(\d+)\}/g, (_m, n: string) => `**(${n})** ${GAP_MARK}`)
+  const baseOf = (e: VocabEntry): string => e.text.trim().replace(/^to\s+/i, '')
+  const passage = text.passage.replace(/\{(\d+)\}/g, (_m, n: string) => {
+    const e = opts.typed ? byId.get(gaps.find((g) => g.n === Number(n))?.entryId ?? '') : undefined
+    return `**(${n})** ${GAP_MARK}${e ? ` *(${baseOf(e)})*` : ''}`
+  })
   // A word at the start of a sentence is capitalised ("Although it rained…"); in the bank it is written like the saved word,
   // otherwise the capital letter would reveal which gaps begin a sentence.
   const bankForm = (g: { entryId: string; form: string }): string => {
@@ -313,6 +336,28 @@ export function buildReadingTest(entries: VocabEntry[], text: ReadingGapText, po
     .map((p) => p.text.trim())
   const bank = shuffle(uniq([...forms, ...extras]), rand)
   const reading = { id: 'WR', title: text.title, passage }
+
+  if (opts.typed) {
+    return gaps.map((g) => {
+      const e = byId.get(g.entryId) as VocabEntry
+      return {
+        id: `G${g.n}`,
+        type: 'gap',
+        prompt: `Gap **(${g.n})** — write the correct form of **${baseOf(e)}**.`,
+        answers: [g.form.trim()],
+        hint: hintFor(g.form),
+        typoTolerant: true,
+        otherForms: phraseForms(baseOf(e)),
+        explain: `**${e.text}** — ${e.translation}\n\n*${filledSentence(text.passage, gaps, g.n)}*`,
+        topics: ['Vocabulary · Reading'],
+        line: 0,
+        key: `words#reading:${e.id}`,
+        testId: 'words',
+        testTitle: title,
+        reading
+      } as TestItem
+    })
+  }
 
   return gaps.map((g) => {
     const e = byId.get(g.entryId) as VocabEntry
@@ -344,7 +389,7 @@ export function buildSentenceGapTest(entries: VocabEntry[], pool: VocabEntry[], 
     for (const s of sentences(e)) {
       const c = makeCloze(s, e.text.trim())
       if (c) {
-        usable.push({ e, before: c.before, after: c.after, form: s.slice(c.before.length, s.length - c.after.length) })
+        usable.push({ e, before: c.before, after: c.after, form: c.form })
         break
       }
     }
@@ -387,6 +432,7 @@ ${list}
 Requirements:
 - At least one question per word, using different question types: choice (4 plausible options), gap (type the missing word), transform or error where it fits, plus 1–2 match blocks (5 pairs each), and one short reading block if the words allow it.
 - Write NEW example sentences. Do not reuse the "seen in" sentences — the test must check understanding, not memory of those sentences.
+- Include several gap questions where the BASE word is given in brackets after the gap and the learner must write the correct grammatical form (e.g. "She is ___ (give up) on her dreams." → "giving up"); list every acceptable form after the answer, separated by |.
 - Distractors in choice questions must be real words of the same kind; move the correct answer around (not always in the same place). Every choice answer must be copied exactly from its options.
 - Frontmatter: title "Vocabulary — ${date}", topics: [Vocabulary]. Put "topic: Vocabulary" on every question.
 - explain: one short sentence in simple English with the Ukrainian translation in brackets.
