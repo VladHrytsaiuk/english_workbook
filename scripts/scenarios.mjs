@@ -784,3 +784,83 @@ scenarios.retrytoday = async ({ page, shot }) => {
   await sleep(800)
   await shot('today-after-retry')
 }
+
+scenarios.wordtest = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  await seedVocab(page)
+  // Give the sentences/examples a realistic shape
+  await page.evaluate(async () => {
+    const all = await window.api.vocab.list()
+    for (const w of all.slice(0, 4)) await window.api.vocab.update(w.id, { pos: 'noun', examples: ['This is a longer example sentence for ' + w.text + '.'] })
+  })
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(600)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  await sleep(500)
+  await shot('word-test-dialog')
+  await page.getByRole('button', { name: 'Start test' }).click()
+  await sleep(700)
+  await shot('word-test-first-question')
+  // Answer every question correctly using the same data the app generated from
+  const answered = []
+  for (let i = 0; i < 40; i++) {
+    if (await page.getByText(/Word test complete/).count()) break
+    const kind = (await page.locator('main span.rounded-md').first().textContent())?.trim()
+    answered.push(kind)
+    // Multiple choice: pick option 1; everything else: "I don't know" (keeps the harness generic)
+    if (kind === 'Multiple choice') await press(page, '1', 'Enter')
+    else await page.getByRole('button', { name: /I don't know/ }).click()
+    await sleep(200)
+    await press(page, 'Enter')
+    await sleep(250)
+  }
+  await sleep(800)
+  await shot('word-test-results')
+  console.log('kinds seen while answering:', JSON.stringify([...new Set(answered)]))
+  const attempts = await page.evaluate(() => window.api.progress.attempts())
+  console.log('attempt:', JSON.stringify(attempts.map((a) => [a.mode, a.testTitle, a.completed, `${a.correct}/${a.total}`])))
+  console.log('question types asked:', JSON.stringify([...new Set(attempts[0].results.map((r) => r.type))]))
+  console.log('topics:', JSON.stringify([...new Set(attempts[0].results.flatMap((r) => r.topics))]))
+  const srs = await page.evaluate(async () => (await window.api.vocab.list()).filter((w) => w.srs.state !== 0).length)
+  console.log('words whose SRS state changed by the test (must be 0):', srs)
+  console.log('bank:', (await page.evaluate(() => window.api.progress.mistakes())).length)
+
+  // Copy the AI prompt
+  await page.getByRole('button', { name: /Done|Back to tests/ }).first().click().catch(() => {})
+  await sleep(400)
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(400)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  await sleep(400)
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {})
+  await page.getByRole('button', { name: /AI prompt/ }).click()
+  await sleep(500)
+  const clip = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => 'CLIPBOARD ERROR ' + e.message)
+  console.log('prompt starts:', JSON.stringify(clip.slice(0, 120)))
+  console.log('prompt has words:', /1\. .+ — .+/.test(clip), '| has spec:', clip.includes('===== TEST FORMAT SPEC ====='), '| length:', clip.length)
+  await shot('after-copy')
+}
+
+scenarios.wordtestpages = async ({ page, shot }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape')
+  await seedVocab(page)
+  await page.getByRole('button', { name: /^Notes/ }).click()
+  await sleep(300)
+  await page.getByRole('button', { name: /^Today/ }).click()
+  await sleep(900)
+  await shot('today-with-word-test')
+  await page.getByRole('button', { name: /^Tests/ }).first().click()
+  await sleep(600)
+  await shot('tests-page-button')
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(500)
+  await page.getByText('Work', { exact: true }).first().click()
+  await sleep(400)
+  await page.getByRole('button', { name: 'Test', exact: true }).click()
+  await sleep(500)
+  await shot('dialog-from-deck-view')
+}

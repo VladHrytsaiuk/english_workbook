@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Download, FolderInput, Languages, Pause, Play, Plus, RotateCcw, Search, Sparkles, Tag, Trash2, Volume2, X } from 'lucide-react'
+import { Check, Download, FolderInput, Languages, ListChecks, Pause, Play, Plus, RotateCcw, Search, Sparkles, Tag, Trash2, Volume2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
+import { WordTestDialog } from '@/components/WordTestDialog'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -58,6 +59,7 @@ export function VocabularyPage() {
   const [adding, setAdding] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null)
   const [tagging, setTagging] = useState(false)
+  const [wordTestOpen, setWordTestOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const now = useMemo(() => new Date(), [entries])
@@ -222,7 +224,7 @@ export function VocabularyPage() {
             <h1 className="truncate text-[17px] font-semibold tracking-tight">{scopeLabel(scope, deckList)}</h1>
             <p className="text-[12.5px] text-muted-foreground">
               {plural(visible.length, 'word')}
-              {queue.length > 0 && ` · ${queue.length} to study now`}
+              {queue.length > 0 && ` · ${queue.length} to review`}
             </p>
           </div>
           <div className="no-drag flex items-center gap-2">
@@ -234,12 +236,12 @@ export function VocabularyPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Escape' && (setQuery(''), e.currentTarget.blur())}
                 placeholder="Search"
-                className="h-8 w-44 rounded-lg border border-transparent bg-muted/70 pl-8 pr-10 text-[13px] outline-none placeholder:text-muted-foreground focus:border-ring/50 focus:bg-background"
+                className="h-8 w-36 rounded-lg border border-transparent bg-muted/70 pl-8 pr-10 text-[13px] outline-none placeholder:text-muted-foreground focus:border-ring/50 focus:bg-background"
               />
               {!query && <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">{modKey}F</Kbd>}
             </div>
             <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-              <SelectTrigger className="h-8 w-[136px] text-[12.5px]">
+              <SelectTrigger className="h-8 w-[128px] text-[12.5px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -258,6 +260,9 @@ export function VocabularyPage() {
               if (path) toast(`Exported to ${path.split('/').pop()}`, 'success')
             }}>
               <Download />
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setWordTestOpen(true)} disabled={list.length < 4} title="A test made of your own words" data-tour="vocab-test">
+              <ListChecks /> Test
             </Button>
             {queue.length > 0 ? (
               <Button size="sm" onClick={() => startReview()} data-tour="vocab-review">
@@ -424,6 +429,8 @@ export function VocabularyPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <WordTestDialog open={wordTestOpen} onClose={() => setWordTestOpen(false)} entries={list} decks={deckList} viewScope={scope} />
 
       <TagDialog
         open={tagging}

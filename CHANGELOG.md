@@ -4,6 +4,22 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.3.0] — 2026-11-07
+
+### Added
+- **Word tests**: a test made of your own vocabulary (Vocabulary → **Test**, Tests → **Word test**, and a "Word test"
+  item in Today's plan). Choose the words (this view, not mastered yet, added this week, difficult, all), how many
+  (10 / 20 / 30) and the question types: choose the translation, choose the English word, write it in English, fill
+  the gap in the sentence where you found the word, build a sentence from an example, match pairs.
+  Difficult words are asked more often; results, per-topic breakdown, "Retry mistakes only" and the mistakes bank work
+  as in any test. A word test does **not** change the spaced-repetition schedule.
+- **AI prompt** button: copies a ready prompt with your words (translations, parts of speech, the sentences you found
+  them in) plus the full test format, so Claude / ChatGPT can write a vocabulary test for exactly your words; save the
+  answer in the `tests/` folder.
+
+### Changed
+- Vocabulary header is a bit more compact to fit the new button.
+
 ## [1.2.1] — 2026-11-06
 
 ### Fixed

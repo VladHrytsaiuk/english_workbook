@@ -287,7 +287,7 @@ export function StatsPage() {
                       <span className="w-32 text-muted-foreground">{relativeTime(a.finishedAt)}</span>
                       <span className="min-w-0 flex-1 truncate">{a.testTitle}</span>
                       <span className="text-[12px] text-muted-foreground">
-                        {a.mode === 'full' ? 'Full' : a.mode === 'retry' ? 'Retry' : a.mode === 'topic' ? 'Topic' : 'Mistakes'}
+                        {a.mode === 'full' ? 'Full' : a.mode === 'retry' ? 'Retry' : a.mode === 'topic' ? 'Topic' : a.mode === 'words' ? 'Words' : 'Mistakes'}
                         {!a.completed && ' · unfinished'}
                       </span>
                       <span className="w-14 text-right tabular-nums text-muted-foreground">

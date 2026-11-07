@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft, ChevronRight, CircleAlert, ExternalLink, FolderOpen, ListChecks, Play, RotateCcw, Target } from 'lucide-react'
-import { useMemo } from 'react'
+import { AlertTriangle, ArrowLeft, ChevronRight, CircleAlert, ExternalLink, FolderOpen, Languages, ListChecks, Play, RotateCcw, Target } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { WordTestDialog } from '@/components/WordTestDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -32,6 +33,9 @@ function TestList() {
   const { tests, navigate, contentLoaded, startSession } = useApp()
   const { data: attempts } = useAsync(() => window.api.progress.attempts())
   const { data: mistakes } = useAsync(() => window.api.progress.mistakes())
+  const { data: vocab } = useAsync(() => window.api.vocab.list())
+  const { data: decks } = useAsync(() => window.api.decks.list())
+  const [wordTestOpen, setWordTestOpen] = useState(false)
   const totalQ = tests.reduce((s, t) => s + t.items.length, 0)
 
   const practiceBank = (): void => {
@@ -46,6 +50,9 @@ function TestList() {
         subtitle={tests.length ? `${plural(tests.length, 'test')} · ${plural(totalQ, 'question')}` : undefined}
         actions={
           <>
+            <Button variant="outline" size="sm" onClick={() => setWordTestOpen(true)} title="A test made of your own vocabulary">
+              <Languages /> Word test
+            </Button>
             {mistakes && mistakes.length > 0 && (
               <Button variant="outline" size="sm" onClick={practiceBank}>
                 <Target /> Practice mistakes ({mistakes.length})
@@ -57,6 +64,7 @@ function TestList() {
           </>
         }
       />
+      <WordTestDialog open={wordTestOpen} onClose={() => setWordTestOpen(false)} entries={vocab ?? []} decks={decks ?? []} />
       <div className="flex-1 overflow-y-auto">
         {contentLoaded && !tests.length ? (
           <EmptyState
@@ -267,7 +275,7 @@ function TestDetail({ testId }: { testId: string }) {
                   <div key={a.id} className="flex items-center gap-3 px-5 py-3 text-[13.5px]">
                     <span className="w-36 text-muted-foreground">{new Date(a.finishedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                     <span className="flex-1">
-                      {a.mode === 'full' ? 'Full test' : a.mode === 'retry' ? 'Retry of mistakes' : a.mode === 'topic' ? 'Topic practice' : 'Mistakes practice'}
+                      {a.mode === 'full' ? 'Full test' : a.mode === 'retry' ? 'Retry of mistakes' : a.mode === 'topic' ? 'Topic practice' : a.mode === 'words' ? 'Word test' : 'Mistakes practice'}
                       {!a.completed && <span className="text-muted-foreground"> · unfinished</span>}
                     </span>
                     <span className="tabular-nums text-muted-foreground">

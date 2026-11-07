@@ -101,7 +101,7 @@ export function Results({ session, attempt, onBack }: { session: RunSession; att
             <ScoreRing value={score} />
             <div className="flex-1">
               <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-                <Sparkles className="size-4 text-primary" /> {attempt.mode === 'retry' ? 'Retry of mistakes' : attempt.mode === 'mistakes' ? 'Mistakes bank practice' : attempt.mode === 'topic' ? 'Topic practice' : 'Test complete'}
+                <Sparkles className="size-4 text-primary" /> {attempt.mode === 'retry' ? 'Retry of mistakes' : attempt.mode === 'mistakes' ? 'Mistakes bank practice' : attempt.mode === 'topic' ? 'Topic practice' : attempt.mode === 'words' ? 'Word test complete' : 'Test complete'}
               </div>
               <h1 className="mt-1 text-[26px] font-semibold tracking-tight">{verdict(score)}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[14px] text-muted-foreground">

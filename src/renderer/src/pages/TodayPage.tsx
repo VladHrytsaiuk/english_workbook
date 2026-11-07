@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, BookOpen, Check, Flame, GraduationCap, Languages, ListChecks, Play, Sparkles, Target, TrendingDown } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, ClipboardCheck, Flame, GraduationCap, Languages, ListChecks, Play, Sparkles, Target, TrendingDown } from 'lucide-react'
 import { useMemo } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { dayKey, activityByDay, minutesFor, splitMistakes, streak, suggestedTest
 import { cn, pct, plural, relativeTime } from '@/lib/utils'
 import { ALL_SCOPE, buildQueue, speak, todayCounts } from '@/lib/vocab'
 import { statusOf } from '@shared/srs'
+import { ALL_KINDS_FOR_TEST, MIN_WORDS_FOR_TEST, buildWordTest, filterBySource, isTestable } from '@shared/wordTest'
 
 function greeting(now: Date): string {
   const h = now.getHours()
@@ -31,6 +32,7 @@ export function TodayPage() {
   const { data: bank } = useAsync(() => window.api.progress.mistakes())
   const { data: vocab } = useAsync(() => window.api.vocab.list())
   const { data: logs } = useAsync(() => window.api.vocab.reviews())
+  const { data: decks } = useAsync(() => window.api.decks.list())
   const now = useMemo(() => new Date(), [attempts, vocab, logs])
   const ready = attempts && bank && vocab && logs && settings
 
@@ -69,6 +71,31 @@ export function TodayPage() {
         done: queue.length === 0,
         doneText: studied ? `${studied} done` : 'All caught up',
         action: queue.length ? { label: 'Start review', run: () => navigate({ page: 'review', scope: ALL_SCOPE, back: { page: 'today' } }) } : undefined
+      })
+    }
+
+    // 1b. A test made of your own words
+    const wordPool = vocab.filter(isTestable)
+    const studying = filterBySource(vocab, 'studying', now)
+    const testWords = studying.length >= 5 ? studying : wordPool
+    const wordTestToday = todayAttempts.some((a) => a.mode === 'words' && a.completed)
+    if ((testWords.length >= MIN_WORDS_FOR_TEST && new Set(wordPool.map((w) => w.translation.trim().toLowerCase())).size >= 4) || wordTestToday) {
+      const n = Math.min(10, testWords.length)
+      plan.push({
+        id: 'wordtest',
+        icon: ClipboardCheck,
+        title: wordTestToday ? 'Word test done' : `Word test: ${plural(n, 'word')}`,
+        detail: wordTestToday ? 'You checked your words today.' : `${studying.length >= 5 ? 'From the words you haven\'t mastered yet' : 'From your words'} · about ${minutesFor(0, n)} min · doesn't change your review schedule`,
+        done: wordTestToday,
+        doneText: 'Done',
+        action: {
+          label: 'Start',
+          run: () => {
+            const title = 'Word test · Today'
+            const items = buildWordTest(testWords, wordPool, { count: 10, kinds: ALL_KINDS_FOR_TEST, deckName: (id) => decks?.find((d) => d.id === id)?.name, title })
+            if (items.length) startSession({ testId: 'words', title, topics: [...new Set(items.flatMap((i) => i.topics))], items, mode: 'words' })
+          }
+        }
       })
     }
 
@@ -160,7 +187,7 @@ export function TodayPage() {
       tests: { done: attempts.filter((a) => a.mode === 'full' && a.completed).length, accuracy: answers30.length ? pct(answers30.filter((r) => r.correct).length, answers30.length) : null },
       recentWords: [...vocab].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10)
     }
-  }, [ready, attempts, bank, vocab, logs, settings, tests, now, navigate, startSession])
+  }, [ready, attempts, bank, vocab, logs, decks, settings, tests, now, navigate, startSession])
 
   if (!view) return <div className="flex-1" />
 
@@ -218,7 +245,7 @@ export function TodayPage() {
                     </div>
                     {p.action && !p.done ? (
                       <Button size="sm" variant={i === view.plan.findIndex((x) => !x.done) ? 'default' : 'outline'} onClick={p.action.run}>
-                        {p.id === 'words' || p.id === 'mistakes' || p.id === 'topic' ? <Play className="fill-current" /> : null}
+                        {['words', 'wordtest', 'mistakes', 'topic'].includes(p.id) ? <Play className="fill-current" /> : null}
                         {p.action.label}
                         {p.id === 'test' && <ArrowRight />}
                       </Button>

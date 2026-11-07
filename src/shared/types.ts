@@ -124,8 +124,8 @@ export interface CheckResult {
 
 // ───────────────────────── Progress ─────────────────────────
 
-/** full test · retry of an attempt's mistakes · mistakes bank · questions on one topic from all tests */
-export type AttemptMode = 'full' | 'retry' | 'mistakes' | 'topic'
+/** full test · retry of an attempt's mistakes · mistakes bank · questions on one topic from all tests · test built from the learner's words */
+export type AttemptMode = 'full' | 'retry' | 'mistakes' | 'topic' | 'words'
 
 export interface QuestionResult {
   key: string

@@ -84,7 +84,7 @@ export function registerIpc(): void {
     await shell.openPath(join(contentDir(), name))
   })
   ipcMain.handle('content:openFolder', (_e, sub?: string) => {
-    const target = sub === 'vocabulary' ? join(contentDir(), 'vocabulary') : contentDir()
+    const target = sub === 'vocabulary' || sub === 'tests' ? join(contentDir(), sub) : contentDir()
     return shell.openPath(target).then(() => undefined)
   })
   ipcMain.handle('content:revealFile', (_e, kind: 'notes' | 'tests', id: string) => shell.showItemInFolder(contentPath(kind, id)))
