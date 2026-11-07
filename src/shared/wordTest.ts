@@ -211,7 +211,7 @@ export function buildWordTest(selected: VocabEntry[], pool: VocabEntry[], opts: 
   const groupOf = (e: VocabEntry): string => e.topic || (e.deckId && opts.deckName?.(e.deckId)) || 'General'
 
   // Harder words first when there are more candidates than questions.
-  const order = weightedOrder(testableSelected, (e) => 1 + e.srs.lapses * 2 + (isDifficult(e) ? 1 : 0), rand)
+  const order = weightedOrder(testableSelected, (e) => 1 + e.srs.lapses * 2 + (isDifficult(e) ? 1 : 0) + (e.trouble ? 2 : 0), rand)
   const built: { entry: VocabEntry; q: Draft; kind: WordKind }[] = []
   let last: WordKind | null = null
   for (const e of order) {
@@ -230,6 +230,7 @@ export function buildWordTest(selected: VocabEntry[], pool: VocabEntry[], opts: 
   const items: Omit<TestItem, 'id'>[] = built.map(({ entry, q, kind }) => ({
     ...(q as SimpleQuestion),
     explain: explainFor(entry),
+    word: entry.text.trim(),
     topics: [`Vocabulary · ${groupOf(entry)}`],
     line: 0,
     key: `words#${entry.id}:${kind}`,
@@ -276,7 +277,7 @@ export function buildWordTest(selected: VocabEntry[], pool: VocabEntry[], opts: 
 
 /** Picks `n` words at random; difficult words (lapses, high difficulty) are more likely to be chosen. */
 export function pickWords(list: VocabEntry[], n: number, rand: Rand = Math.random): VocabEntry[] {
-  return weightedOrder(list, (e) => 1 + e.srs.lapses * 2 + (isDifficult(e) ? 1 : 0), rand).slice(0, n)
+  return weightedOrder(list, (e) => 1 + e.srs.lapses * 2 + (isDifficult(e) ? 1 : 0) + (e.trouble ? 2 : 0), rand).slice(0, n)
 }
 
 /** True when a saved sentence of the word contains it, so it can be blanked out. */
@@ -349,6 +350,7 @@ export function buildReadingTest(entries: VocabEntry[], text: ReadingGapText, po
         typoTolerant: true,
         otherForms: phraseForms(baseOf(e)),
         explain: `**${e.text}** — ${e.translation}\n\n*${filledSentence(text.passage, gaps, g.n)}*`,
+        word: e.text.trim(),
         topics: ['Vocabulary · Reading'],
         line: 0,
         key: `words#reading:${e.id}`,
@@ -369,6 +371,7 @@ export function buildReadingTest(entries: VocabEntry[], text: ReadingGapText, po
       answer: bankForm(g),
       keepOrder: true,
       explain: `**${e.text}** — ${e.translation}\n\n*${filledSentence(text.passage, gaps, g.n)}*`,
+      word: e.text.trim(),
       topics: ['Vocabulary · Reading'],
       line: 0,
       key: `words#reading:${e.id}`,
@@ -435,6 +438,7 @@ Requirements:
 - Include several gap questions where the BASE word is given in brackets after the gap and the learner must write the correct grammatical form (e.g. "She is ___ (give up) on her dreams." → "giving up"); list every acceptable form after the answer, separated by |.
 - Distractors in choice questions must be real words of the same kind; move the correct answer around (not always in the same place). Every choice answer must be copied exactly from its options.
 - Frontmatter: title "Vocabulary — ${date}", topics: [Vocabulary]. Put "topic: Vocabulary" on every question.
+- Put "word: <the word from the list above, exactly as written there>" on every question that checks one of the words (also on the sub-questions of a reading block) — the app uses it to mark the learner's difficult words. Do not add it to match questions that cover several words.
 - explain: one short sentence in simple English with the Ukrainian translation in brackets.
 - Output ONLY the content of the Markdown file, with no comments before or after it.
 

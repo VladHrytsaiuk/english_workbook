@@ -26,7 +26,8 @@ const FREE_TEXT_KEYS = new Set([
   'explanation',
   'hint',
   'title',
-  'topic'
+  'topic',
+  'word'
 ])
 
 const KEY_ALIASES: Record<string, string> = {
@@ -43,7 +44,7 @@ const KEY_ALIASES: Record<string, string> = {
   'not-given': 'notgiven'
 }
 
-const BASE_KEYS = ['type', 'q', 'explain', 'hint', 'topic']
+const BASE_KEYS = ['type', 'q', 'explain', 'hint', 'topic', 'word']
 const ALLOWED_KEYS: Record<string, string[]> = {
   choice: [...BASE_KEYS, 'options', 'answer'],
   gap: [...BASE_KEYS, 'answer'],
@@ -164,6 +165,7 @@ function buildSimple(raw: Raw, id: string, line: number, ctx: Ctx, inheritedTopi
     prompt: str(r.q) ?? '',
     explain: str(r.explain) || undefined,
     hint: str(r.hint) || undefined,
+    word: str(r.word) || undefined,
     topics: topicsOwn.length ? topicsOwn : inheritedTopics
   }
 

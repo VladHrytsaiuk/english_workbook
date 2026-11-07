@@ -4,6 +4,18 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.6.0] — 2026-11-08
+
+### Added
+- **`word:` in test files** links a question to a vocabulary word (`word: give up`). A mistake marks that word as
+  **difficult**: it appears under Vocabulary → Difficult, comes up more often in word tests, and the word's card says why.
+  Two correct test answers in a row clear the mark. Tests never change the spaced-repetition schedule.
+  The match is forgiving (case, punctuation, a leading *to*, and grammatical forms: `word: giving up` finds "to give up").
+- **Words behind your mistakes**: the results screen lists the saved words whose questions you got wrong, with a
+  **Review these words** button.
+- Word tests made by the app carry `word:` too, so their mistakes mark words in the same way. The *AI prompt* now asks the chat
+  to add `word:` to every question about a word of yours; `docs/TEST_FORMAT.md` documents the key.
+
 ## [1.5.0] — 2026-11-08
 
 ### Added

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { newSrs, reviewCard, statusOf } from '@shared/srs'
 import { dedupKey } from '@shared/dedup'
+import { findByWord, updateTrouble } from '@shared/trouble'
 import type { Deck, ReviewMode, SrsGrade, VocabEntry, VocabInput, VocabReviewLog } from '@shared/types'
 import type { ParsedVocabFile } from '@shared/vocabParser'
 import { getSettings } from './data'
@@ -284,6 +285,31 @@ export function syncFromFiles(files: FileForSync[]): { added: number; updated: n
   fileStateFile.set(nextState)
   const missingTranslation = [...byId.values()].filter((v) => v.source.kind === 'file' && !v.translation).map((v) => v.id)
   return { added, updated, existing, changed, missingTranslation }
+}
+
+// ───────────── marks from test results ─────────────
+
+/**
+ * Applies the answers of a finished (or abandoned) test to the words they check (`word:` in the test file):
+ * a mistake marks the word as difficult, correct answers in a row clear the mark. Does not touch the review schedule.
+ * Returns the words that are currently marked after this update.
+ */
+export function applyTestResults(results: { word?: string; correct: boolean }[], at: string): string[] {
+  const linked = results.filter((r) => r.word?.trim())
+  if (!linked.length) return []
+  const list = all()
+  const changed = new Map<string, VocabEntry>()
+  for (const r of linked) {
+    const entry = findByWord(list, r.word as string)
+    if (!entry) continue
+    const current = changed.get(entry.id) ?? entry
+    const trouble = updateTrouble(current.trouble, r.correct, at)
+    const next = { ...current, trouble, updatedAt: at }
+    if (!trouble) delete next.trouble
+    changed.set(entry.id, next)
+  }
+  if (changed.size) save(list.map((v) => changed.get(v.id) ?? v))
+  return [...changed.values()].filter((v) => v.trouble).map((v) => v.text)
 }
 
 // ───────────── reviews ─────────────

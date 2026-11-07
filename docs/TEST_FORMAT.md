@@ -58,6 +58,7 @@ explain: Since + a point in time and the action continues → Present Perfect.
 | `answer` | yes (except `match`) | The correct answer. For typed answers, separate alternatives with `|`. |
 | `explain` | strongly recommended | Explanation shown **after** the learner answers. |
 | `topic` | recommended | Topic of this question for statistics (overrides the file's `topics`). A list is allowed: `[Past Simple, Irregular verbs]`. |
+| `word` | optional | The vocabulary word this question checks, e.g. `word: give up`. If the learner has that word saved, a mistake marks it as **difficult** (it appears under Vocabulary → Difficult and in word tests more often); two correct answers in a row clear the mark. Write the word exactly as in the learner's list, in its base form. Use it in vocabulary tests; leave it out of grammar questions and out of `match` questions that cover several words. |
 | `hint` | optional | A hint the learner can reveal before answering. |
 
 ### Writing rules
@@ -94,6 +95,18 @@ explain: A longer action in progress (Past Continuous) interrupted by a short on
 
 - `options` — 2 or more options (keyboard shortcuts 1–9 work for the first nine).
 - `answer` — the exact text of the correct option. (A letter `b` or a 1-based number `2` is also accepted.)
+
+**Linking a question to a vocabulary word** (optional, for vocabulary tests):
+
+```markdown
+## Q1
+type: gap
+topic: Vocabulary
+word: deadline
+q: We have to meet the ___ by Friday.
+answer: deadline
+explain: A deadline is the last moment to finish something (кінцевий термін).
+```
 
 ### 3.2 `gap` — fill in the gap
 

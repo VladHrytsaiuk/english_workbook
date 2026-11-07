@@ -96,6 +96,8 @@ export function registerIpc(): void {
   ipcMain.handle('progress:attempts', () => data.listAttempts())
   ipcMain.handle('progress:saveAttempt', (_e, attempt: Attempt, items: TestItem[]) => {
     data.saveAttempt(attempt, items)
+    // Questions that name a vocabulary word (`word:`) mark that word as difficult after a mistake.
+    vocab.applyTestResults(attempt.results, attempt.finishedAt)
   })
   ipcMain.handle('progress:deleteAttempt', (_e, id: string) => data.deleteAttempt(id))
   ipcMain.handle('progress:mistakes', () => data.listMistakes())

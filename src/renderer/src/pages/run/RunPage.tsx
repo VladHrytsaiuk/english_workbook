@@ -31,6 +31,7 @@ function buildAttempt(session: RunSession, items: TestItem[], startedAt: string,
       topics: i.topics,
       correct: graded[i.key].correct,
       overridden: graded[i.key].overridden || undefined,
+      word: i.word,
       userAnswer: formatUserAnswer(i, answers[i.key]),
       correctAnswer: formatCorrectAnswer(i)
     }))

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowLeft, Check, Clock, RotateCcw, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Check, Clock, Languages, RotateCcw, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
 import { InlineMarkdown, Markdown } from '@/components/Markdown'
 import { Badge } from '@/components/ui/badge'
@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Kbd } from '@/components/ui/kbd'
 import { useKeydown } from '@/hooks/useHotkey'
-import { type RunSession, useApp } from '@/lib/store'
+import { type RunSession, useApp, useAsync } from '@/lib/store'
 import { cn, pct } from '@/lib/utils'
+import { findByWord } from '@shared/trouble'
 import type { Attempt } from '@shared/types'
 import { TYPE_LABEL } from './questions'
 
@@ -59,6 +60,13 @@ export function Results({ session, attempt, onBack }: { session: RunSession; att
   const mins = Math.max(1, Math.round((new Date(attempt.finishedAt).getTime() - new Date(attempt.startedAt).getTime()) / 60000))
   const byKey = useMemo(() => new Map(session.items.map((i) => [i.key, i])), [session.items])
   const mistakes = attempt.results.filter((r) => !r.correct)
+  // Questions that name a vocabulary word (`word:` in the test) link the mistakes to the learner's words.
+  const { navigate } = useApp()
+  const { data: vocab } = useAsync(() => window.api.vocab.list())
+  const wordsBehind = useMemo(() => {
+    const found = mistakes.filter((m) => m.word).map((m) => findByWord(vocab ?? [], m.word as string))
+    return [...new Map(found.filter((v): v is NonNullable<typeof v> => Boolean(v)).map((v) => [v.id, v])).values()]
+  }, [vocab, mistakes])
 
   const topics = useMemo(() => {
     const m = new Map<string, { right: number; total: number }>()
@@ -153,6 +161,39 @@ export function Results({ session, attempt, onBack }: { session: RunSession; att
                     </div>
                   )
                 })}
+              </Card>
+            </section>
+          )}
+
+          {/* Words behind the mistakes */}
+          {wordsBehind.length > 0 && (
+            <section className="mt-12">
+              <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Words behind your mistakes ({wordsBehind.length})</h2>
+              <Card className="p-5">
+                <div className="flex flex-wrap gap-2">
+                  {wordsBehind.map((w) => (
+                    <span key={w.id} className="rounded-lg border bg-muted/40 px-2.5 py-1 text-[13.5px]">
+                      <span className="font-medium">{w.text}</span>
+                      {w.translation && <span className="ml-1.5 text-muted-foreground">{w.translation}</span>}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      navigate({
+                        page: 'review',
+                        scope: { kind: 'ids', ids: wordsBehind.map((w) => w.id), label: 'Words from the test' },
+                        cram: true,
+                        back: { page: 'tests' }
+                      })
+                    }
+                  >
+                    <Languages /> Review these words
+                  </Button>
+                  <span className="text-[12.5px] text-muted-foreground">They are marked as difficult: you'll see them under Vocabulary → Difficult and they come up more often in word tests.</span>
+                </div>
               </Card>
             </section>
           )}

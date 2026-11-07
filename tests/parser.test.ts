@@ -106,6 +106,23 @@ describe('question-type details', () => {
   })
 })
 
+describe('word: links a question to a vocabulary word', () => {
+  it('reads it on questions and on reading sub-questions, without warnings', () => {
+    const t = parseTest(
+      '## Q1\ntype: gap\nword: give up\nq: She is ___ her job.\nanswer: giving up\n\n## R1\ntype: reading\npassage: |\n  Text.\nquestions:\n  - type: tf\n    word: deadline\n    q: x\n    answer: true\n',
+      't.md'
+    )
+    expect(t.issues).toEqual([])
+    expect(t.items.map((i) => i.word)).toEqual(['give up', 'deadline'])
+  })
+  it('is optional', () => {
+    expect(parseTest('## Q1\ntype: tf\nq: x\nanswer: true\n', 't.md').items[0].word).toBeUndefined()
+  })
+  it('keeps colons and quotes in the value', () => {
+    expect(parseTest('## Q1\ntype: tf\nword: look forward to: something\nq: x\nanswer: true\n', 't.md').items[0].word).toBe('look forward to: something')
+  })
+})
+
 describe('validation errors', () => {
   it('reports a missing answer with the line number', () => {
     const e = errors('---\ntitle: x\n---\n\n## Q1\ntype: gap\nq: a ___ b\n')

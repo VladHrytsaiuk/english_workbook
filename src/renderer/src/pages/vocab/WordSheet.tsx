@@ -233,6 +233,11 @@ export function WordSheet({
             <dd className="font-medium tabular-nums">{entry.srs.state === 0 ? '—' : `${entry.srs.difficulty.toFixed(1)} / 10`}</dd>
             <dd className="col-span-2 font-medium">{entry.srs.state === 0 ? 'not started' : formatDate(entry.srs.due, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</dd>
           </dl>
+          {entry.trouble && (
+            <p className="mt-3 rounded-lg bg-amber-500/10 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:text-amber-200">
+              Marked difficult by {entry.trouble.misses === 1 ? 'a mistake' : `${entry.trouble.misses} mistakes`} in tests. The mark clears after 2 correct test answers in a row ({entry.trouble.streak}/2 so far).
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 px-2">

@@ -1084,3 +1084,64 @@ scenarios.typedvalue = async ({ page }) => {
   const after = await page.locator('main input').inputValue()
   console.log(`input before typing: "${before}"  after typing "give up": "${after}"`)
 }
+
+scenarios.wordlink = async ({ page, shot, contentDir }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  await page.evaluate(() => window.api.settings.update({ shuffleQuestions: false, shuffleAnswers: false }))
+  await page.reload() // the window reads settings once at start
+  await sleep(1200)
+  await page.evaluate(async () => {
+    for (const [text, translation] of [['deadline', 'кінцевий термін'], ['reliable', 'надійний'], ['commute', 'дорога на роботу'], ['appointment', 'запис']]) {
+      await window.api.vocab.add({ id: crypto.randomUUID(), text, translation, source: { kind: 'other', title: 'x' }, createdAt: new Date().toISOString() })
+    }
+  })
+  writeFileSync(
+    join(contentDir, 'tests', 'chat-vocab.md'),
+    `---\ntitle: Chat vocabulary test\ntopics: [Vocabulary]\n---\n\n## Q1\ntype: gap\ntopic: Vocabulary\nword: deadline\nq: We have to meet the ___ by Friday.\nanswer: deadline\nexplain: A deadline is the last moment (кінцевий термін).\n\n## Q2\ntype: choice\ntopic: Vocabulary\nword: reliable\nq: She is a very ___ colleague.\noptions: [reliable, rainy, rapid, rare]\nanswer: reliable\nexplain: Reliable means you can trust it.\n\n## Q3\ntype: gap\ntopic: Vocabulary\nword: commute\nq: My daily ___ takes an hour.\nanswer: commute\nexplain: The journey to work.\n\n## Q4\ntype: gap\ntopic: Vocabulary\nword: banana\nq: A yellow fruit: ___\nanswer: banana\nexplain: Not in the vocabulary.\n`
+  )
+  await sleep(1200)
+  const run = async (answers) => {
+    await page.getByRole('button', { name: /^Tests/ }).first().click()
+    await sleep(400)
+    await page.getByText('Chat vocabulary test').first().click()
+    await sleep(500)
+    await press(page, 'Enter')
+    await sleep(600)
+    for (const a of answers) {
+      if (a === 'pick1') await press(page, '1', 'Enter')
+      else if (a) { await page.keyboard.type(a); await press(page, 'Enter') }
+      else { await page.getByRole('button', { name: /I don't know/ }).click() }
+      await sleep(250)
+      await press(page, 'Enter')
+      await sleep(300)
+    }
+    await sleep(600)
+  }
+  const troubled = () => page.evaluate(async () => (await window.api.vocab.list()).filter((w) => w.trouble).map((w) => `${w.text}(misses ${w.trouble.misses}, streak ${w.trouble.streak})`))
+  // 1. Q1 wrong, Q2 right, Q3 wrong, Q4 wrong (the word is not saved)
+  await run(['', 'pick1', '', ''])
+  await shot('results-words-behind')
+  console.log('1. after mistakes, marked difficult:', JSON.stringify(await troubled()))
+  await page.getByRole('button', { name: 'Review these words' }).click()
+  await sleep(600)
+  await shot('review-these-words')
+  await press(page, 'Escape')
+  await sleep(300)
+  // 2. Vocabulary → Difficult
+  await page.getByRole('button', { name: /^Vocabulary/ }).click()
+  await sleep(500)
+  await page.getByRole('button', { name: /^Difficult/ }).click()
+  await sleep(400)
+  await shot('difficult-list')
+  await page.getByText('commute', { exact: true }).first().click()
+  await sleep(500)
+  await shot('word-sheet-marked')
+  await press(page, 'Escape')
+  // 3. Answer both correctly twice → the marks clear
+  await run(['deadline', 'pick1', 'commute', 'banana'])
+  console.log('2. after 1 correct round:', JSON.stringify(await troubled()))
+  await run(['deadline', 'pick1', 'commute', 'banana'])
+  console.log('3. after 2 correct rounds:', JSON.stringify(await troubled()))
+}

@@ -109,6 +109,14 @@ describe('buildWordTest', () => {
     expect(checkAnswer(q, 'painted').correct).toBe(false)
   })
 
+  it('questions about one word carry the word (so mistakes mark it as difficult); matching rounds do not', () => {
+    const items = buildWordTest(WORDS, WORDS, { count: 10, kinds: ALL, rand: seeded(5) })
+    for (const q of items) {
+      if (q.type === 'match') expect(q.word).toBeUndefined()
+      else expect(WORDS.some((w) => w.text === q.word), `${q.id} ${q.word}`).toBe(true)
+    }
+  })
+
   it('typing and gap questions forgive one spelling slip; choice questions are unaffected', () => {
     const [typing] = buildWordTest([word(1, 'documentation', 'документація', { context: 'Read the documentation first.' })], WORDS, { count: 1, kinds: ['typing'] })
     if (typing.type !== 'gap') throw new Error('gap')
@@ -223,6 +231,9 @@ describe('wordTestPrompt', () => {
     expect(p).toContain('3. reliable — надійний [adjective]')
     expect(p).toContain('ONLY these 3 words')
     expect(p).toContain('Vocabulary — 2026-11-07')
+  })
+  it('asks the chat to link questions to the words with word:', () => {
+    expect(p).toContain('"word: <the word from the list above, exactly as written there>"')
   })
   it('includes the whole format spec, so any chat can write a valid file', () => {
     expect(p).toContain('===== TEST FORMAT SPEC =====')

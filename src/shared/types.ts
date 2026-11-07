@@ -21,6 +21,8 @@ interface QuestionBase {
   prompt: string
   explain?: string
   hint?: string
+  /** The vocabulary word this question checks (`word:` in the test file); mistakes mark that word as difficult. */
+  word?: string
   topics: string[]
   /** 1-based line in the source file where the question starts. */
   line: number
@@ -143,6 +145,8 @@ export interface QuestionResult {
   correct: boolean
   /** True when the learner pressed "Count as correct". */
   overridden?: boolean
+  /** The vocabulary word the question checks, when the test says so. */
+  word?: string
   userAnswer: string
   correctAnswer: string
 }
@@ -215,6 +219,8 @@ export interface VocabEntry {
   examples?: string[]
   note?: string
   suspended?: boolean
+  /** Marked difficult by mistakes in tests; clears after 2 correct test answers in a row. */
+  trouble?: { misses: number; streak: number; lastMissAt: string }
   srs: SrsCard
 }
 

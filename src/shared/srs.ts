@@ -88,8 +88,8 @@ export function isDue(e: Pick<VocabEntry, 'srs' | 'suspended'>, now: Date): bool
   return !e.suspended && e.srs.state !== 0 && new Date(e.srs.due).getTime() <= now.getTime()
 }
 
-export function isDifficult(e: Pick<VocabEntry, 'srs'>): boolean {
-  return e.srs.lapses >= 2 || (e.srs.state !== 0 && e.srs.difficulty >= 7.5)
+export function isDifficult(e: Pick<VocabEntry, 'srs' | 'trouble'>): boolean {
+  return Boolean(e.trouble) || e.srs.lapses >= 2 || (e.srs.state !== 0 && e.srs.difficulty >= 7.5)
 }
 
 // ───────────── typed answers ─────────────

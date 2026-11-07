@@ -191,6 +191,11 @@ different forms), the better this works.
 every word into its gap from a word bank (with one or two extra words that don't fit). Without a key or internet the
 exercise is built from the sentences you saved with the words.
 
+**Linking a test to your vocabulary.** Any question can say which saved word it checks (`word: give up`, see
+`TEST_FORMAT.md`). A mistake marks that word as **difficult** (Vocabulary → Difficult, more often in word tests, a note on its
+card); two correct answers in a row clear the mark. The results screen lists *Words behind your mistakes* with a
+**Review these words** button. This works for tests written by a chat as well as for word tests made by the app.
+
 **AI prompt** copies a ready-to-paste prompt with your words (translation, part of speech, the sentence you found
 them in) and the complete test format, so a chat that knows nothing about the app can write a vocabulary test for exactly
 your words — save its answer as a `.md` file in `tests/`.
