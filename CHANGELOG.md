@@ -4,6 +4,24 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.7.0] — 2026-11-08
+
+### Added
+- **Writing** (new section, `⌘5`; Stats moved to `⌘6`):
+  - **Writing of the month**: a task from a bank of 24 (emails, opinions, descriptions, stories, reviews) or your own topic,
+    with up to 5 of your practised words to try to use (any grammatical form counts). An editor with a word counter and
+    automatic drafts. An AI checks the text on four criteria (0–5), the percentage is calculated by the app, with a CEFR level,
+    strengths, priorities, the text with the mistakes marked, corrections with explanations and a corrected version.
+  - **Correspondence**: 10 real-life situations (landlord, interview, restaurant complaint, hotel, doctor…) or your own.
+    An AI plays the other person, gives a short tip under a message that has a clear mistake, and evaluates the conversation at the end.
+  - A history with scores over time, your most common kinds of mistakes, and a Markdown copy of every checked text in `writing/`.
+  - A "Writing of the month" item in Today's plan until it is done.
+- Settings → Writing: language of the feedback (Ukrainian / English) and tips while chatting.
+
+### Notes
+- The AI's answer is checked before it is shown: a correction is kept only if its quote really is in your text, scores are
+  clamped to 0–5, and which target words you used is decided by the app. The score is feedback, not an exam result.
+
 ## [1.6.0] — 2026-11-08
 
 ### Added

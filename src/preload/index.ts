@@ -55,6 +55,14 @@ const api: WorkbookApi = {
     enrich: (id) => invoke('vocab:enrich', id),
     exportCsv: (ids) => invoke('vocab:exportCsv', ids)
   },
+  writing: {
+    list: () => invoke('writing:list'),
+    create: (input) => invoke('writing:create', input),
+    saveText: (id, text) => invoke('writing:saveText', id, text),
+    remove: (id) => invoke('writing:remove', id),
+    evaluate: (id) => invoke('writing:evaluate', id),
+    chatTurn: (id, text) => invoke('writing:chatTurn', id, text)
+  },
   decks: {
     list: () => invoke('decks:list'),
     create: (name, color) => invoke('decks:create', name, color),

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeTheme, shell } from 'electron'
 import { existsSync, writeFileSync } from 'node:fs'
 import { join, normalize, sep } from 'node:path'
-import type { Attempt, ReviewMode, Settings, SrsGrade, TestItem, TranslationProvider, VocabEntry, VocabInput } from '@shared/types'
+import type { Attempt, NewWritingEntry, ReviewMode, Settings, SrsGrade, TestItem, TranslationProvider, VocabEntry, VocabInput } from '@shared/types'
 import { DEFAULT_CONTENT_DIR, ensureWorkbookExtras, prepareContentDir, readNotes, readTests, watchContent } from './content'
 import * as data from './data'
 import { clearSecret, secretsStatus, setSecret } from './secrets'
@@ -9,6 +9,7 @@ import { learningDataDir, useWorkbookDir } from './storage'
 import { syncVocabularyFolder } from './vocabFiles'
 import { clearTranslationCache, enrichWord, generateReadingPassage, translate, translationCacheSize } from './translate'
 import * as vocab from './vocab'
+import * as writing from './writing'
 
 function contentDir(): string {
   const dir = data.getSettings().contentDir
@@ -84,7 +85,7 @@ export function registerIpc(): void {
     await shell.openPath(join(contentDir(), name))
   })
   ipcMain.handle('content:openFolder', (_e, sub?: string) => {
-    const target = sub === 'vocabulary' || sub === 'tests' ? join(contentDir(), sub) : contentDir()
+    const target = sub === 'vocabulary' || sub === 'tests' || sub === 'writing' ? join(contentDir(), sub) : contentDir()
     return shell.openPath(target).then(() => undefined)
   })
   ipcMain.handle('content:revealFile', (_e, kind: 'notes' | 'tests', id: string) => shell.showItemInFolder(contentPath(kind, id)))
@@ -156,6 +157,13 @@ export function registerIpc(): void {
     writeFileSync(res.filePath, vocab.vocabToCsv(chosen), 'utf8')
     return res.filePath
   })
+
+  ipcMain.handle('writing:list', () => writing.listWriting())
+  ipcMain.handle('writing:create', (_e, input: NewWritingEntry) => writing.createWriting(input))
+  ipcMain.handle('writing:saveText', (_e, id: string, text: string) => writing.saveWritingText(String(id), String(text ?? '')))
+  ipcMain.handle('writing:remove', (_e, id: string) => writing.removeWriting(String(id)))
+  ipcMain.handle('writing:evaluate', (_e, id: string) => writing.evaluateWriting(String(id)))
+  ipcMain.handle('writing:chatTurn', (_e, id: string, text: string) => writing.chatTurn(String(id), String(text ?? '')))
 
   ipcMain.handle('decks:list', () => vocab.listDecks())
   ipcMain.handle('decks:create', (_e, name: string, color?: string) => vocab.createDeck(String(name ?? ''), color))

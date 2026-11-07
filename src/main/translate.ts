@@ -71,8 +71,8 @@ async function deepl(text: string, context: string | undefined, key: string): Pr
 
 // ───────────── LLM calls with JSON output (Claude / Gemini) ─────────────
 
-interface JsonSchema {
-  type: 'object' | 'string' | 'array' | 'integer'
+export interface JsonSchema {
+  type: 'object' | 'string' | 'array' | 'integer' | 'boolean'
   properties?: Record<string, JsonSchema>
   items?: JsonSchema
   required?: string[]
@@ -80,7 +80,7 @@ interface JsonSchema {
   enum?: string[]
 }
 
-interface LlmRequest {
+export interface LlmRequest {
   system: string
   user: string
   schema: JsonSchema
@@ -435,10 +435,10 @@ export async function enrichWord(word: { text: string; translation: string; cont
   return { ok: true, provider: r.provider, data: asEnrichment(r.data) }
 }
 
-type LlmResult = { ok: true; data: Json; provider: TranslationProvider } | { ok: false; code: TranslateErrorCode; message: string }
+export type LlmResult = { ok: true; data: Json; provider: TranslationProvider } | { ok: false; code: TranslateErrorCode; message: string }
 
 /** Runs a JSON-returning request on the chosen provider (Gemini or Claude), falling back to the other one. */
-async function runLlm(req: LlmRequest, what: string): Promise<LlmResult> {
+export async function runLlm(req: LlmRequest, what: string): Promise<LlmResult> {
   const settings = getSettings()
   const order: TranslationProvider[] = settings.provider === 'claude' ? ['claude', 'gemini'] : ['gemini', 'claude']
   const usable = order.filter((p) => getSecret(p))

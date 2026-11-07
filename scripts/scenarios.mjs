@@ -1145,3 +1145,105 @@ scenarios.wordlink = async ({ page, shot, contentDir }) => {
   await run(['deadline', 'pick1', 'commute', 'banana'])
   console.log('3. after 2 correct rounds:', JSON.stringify(await troubled()))
 }
+
+scenarios.writing = async ({ page, shot, contentDir }) => {
+  await ensureSetup(page)
+  await sleep(1600)
+  await page.keyboard.press('Escape') // first-run tour
+  await page.evaluate(async () => {
+    for (const [text, translation] of [['deadline', 'кінцевий термін'], ['reliable', 'надійний'], ['commute', 'дорога на роботу'], ['appointment', 'запис'], ['give up', 'здаватися']]) {
+      const e = await window.api.vocab.add({ id: crypto.randomUUID(), text, translation, source: { kind: 'other', title: 'x' }, createdAt: new Date().toISOString() })
+      await window.api.vocab.review(e.id, 3, 'flashcard', 900)
+    }
+  })
+  await page.getByRole('button', { name: /^Writing/ }).click()
+  await sleep(600)
+  await shot('hub-empty')
+
+  // 1. Essay
+  await page.getByRole('button', { name: 'Start writing' }).click()
+  await sleep(500)
+  await shot('essay-dialog')
+  await page.getByRole('button', { name: 'Start writing' }).last().click()
+  await sleep(800)
+  const essay = 'I am agree that working from home is better. Last year I gave up the long commute and I became more productive. My manager is very reliable and we always meet every deadline together. In the evening I have more time for my family, and I do not spend money on transport. However, sometimes I feel lonely, so I visit the office once a week to see my colleagues and to have lunch with them. In my opinion, a mixed schedule is the best solution for most people because it gives both freedom and contact with the team.'
+  await page.locator('textarea').fill(essay)
+  await sleep(1000)
+  await shot('essay-editor')
+  await page.getByRole('button', { name: 'Get feedback' }).click()
+  await sleep(1500)
+  await shot('essay-feedback')
+  await page.mouse.move(700, 500)
+  await page.mouse.wheel(0, 900)
+  await sleep(300)
+  await shot('essay-feedback-scrolled')
+  const fs = await import('node:fs')
+  const files = fs.existsSync(join(contentDir, 'writing')) ? fs.readdirSync(join(contentDir, 'writing')) : []
+  console.log('markdown copy in writing/:', JSON.stringify(files))
+  if (files[0]) console.log(fs.readFileSync(join(contentDir, 'writing', files[0]), 'utf8').split('\n').slice(0, 9).join(' | '))
+
+  // 2. Conversation
+  await page.getByRole('button', { name: 'Back to Writing' }).click()
+  await sleep(500)
+  await page.getByText('Reschedule a meeting with a colleague').first().click()
+  await sleep(500)
+  await shot('chat-dialog')
+  await page.getByRole('button', { name: 'Start', exact: true }).click()
+  await sleep(700)
+  const say = async (t) => {
+    await page.locator('textarea').fill(t)
+    await page.keyboard.press('Enter')
+    await sleep(1000)
+  }
+  await say('I am agree, but I cannot come tomorrow because I have a doctor appointment.')
+  await shot('chat-tip')
+  await say('Could we meet on Thursday at 11 instead?')
+  await say('Thank you. What will I miss?')
+  await sleep(300)
+  await shot('chat-done')
+  await page.getByRole('button', { name: /Finish & get feedback/ }).click()
+  await sleep(1500)
+  await shot('chat-feedback')
+  const entries = await page.evaluate(() => window.api.writing.list())
+  console.log('entries:', JSON.stringify(entries.map((e) => [e.kind, e.status, e.evaluation?.overall, e.messages.length])))
+
+  // 3. Today plan + hub with history
+  await page.getByRole('button', { name: /^Today/ }).click()
+  await sleep(900)
+  await shot('today-writing-done')
+  await page.getByRole('button', { name: /^Writing/ }).click()
+  await sleep(700)
+  await shot('hub-with-history')
+}
+
+scenarios.writinglive = async ({ page }) => {
+  await ensureSetup(page)
+  await sleep(1200)
+  const key = process.env.EW_TEST_GEMINI_KEY
+  if (!key) throw new Error('EW_TEST_GEMINI_KEY is not set')
+  await page.evaluate((k) => window.api.secrets.set('gemini', k), key)
+  const essay = 'I am agree that working from home is better. Last year I give up the long commute and I became more productive. My manager are very reliable and we always meet every deadline. In the evening I have more time for my family and I do not spend money for transport. However, sometimes I feel lonely, so I visit the office one time in week to see my colleagues. In my opinion, a mixed schedule is the best solution because it gives both freedom and contact with the team.'
+  const r = await page.evaluate(async (text) => {
+    const e = await window.api.writing.create({ kind: 'essay', title: 'Working from home', prompt: 'Some people say working from home is better than working in an office. Write an essay giving your opinion.', targetWords: ['reliable', 'deadline', 'give up'], minWords: 120, maxWords: 200 })
+    await window.api.writing.saveText(e.id, text)
+    const t0 = Date.now()
+    const res = await window.api.writing.evaluate(e.id)
+    return { ms: Date.now() - t0, res }
+  }, essay)
+  if (!r.res.ok) console.log('ESSAY FAILED:', r.res.code, r.res.message)
+  else {
+    const ev = r.res.entry.evaluation
+    console.log(`ESSAY OK in ${r.ms} ms via ${ev.provider}: overall ${ev.overall}, cefr ${ev.cefr}, scores ${JSON.stringify(ev.scores)}`)
+    console.log('summary:', ev.summary)
+    console.log('corrections:', JSON.stringify(ev.corrections.map((c) => `${c.original} → ${c.corrected} [${c.category}]`), null, 0))
+    console.log('target words:', JSON.stringify(ev.targetWords.map((w) => `${w.word}:${w.used ? (w.correct ? 'ok' : 'wrong') : 'unused'}`)))
+  }
+  const c = await page.evaluate(async () => {
+    const e = await window.api.writing.create({ kind: 'chat', title: 'Reschedule a meeting', prompt: "You cannot come to tomorrow's meeting. Write to your colleague Sam in the work chat.", aiRole: 'a friendly colleague called Sam', register: 'informal', goals: ['say you cannot come and why', 'suggest a new time'], targetWords: [], opening: 'Hi! Are we still on for the meeting tomorrow at 10?' })
+    const t0 = Date.now()
+    const res = await window.api.writing.chatTurn(e.id, 'Hi Sam. I am afraid I can not come tomorrow, because I am agree to visit the doctor. Can we meet on Thursday?')
+    return { ms: Date.now() - t0, res }
+  })
+  if (!c.res.ok) console.log('CHAT FAILED:', c.res.code, c.res.message)
+  else console.log(`CHAT OK in ${c.ms} ms: reply="${c.res.entry.messages.at(-1).content}" | tip="${c.res.entry.messages.at(-2).tip ?? ''}" | done=${c.res.entry.chatDone}`)
+}

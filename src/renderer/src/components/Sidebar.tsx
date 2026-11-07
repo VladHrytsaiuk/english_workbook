@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, CalendarCheck, CircleHelp, Languages, ListChecks, Monitor, Moon, Settings as SettingsIcon, Sun } from 'lucide-react'
+import { BarChart3, BookOpen, CalendarCheck, CircleHelp, Languages, ListChecks, Monitor, Moon, PenLine, Settings as SettingsIcon, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { HelpDialog } from './HelpDialog'
 import { motion } from 'framer-motion'
@@ -15,6 +15,7 @@ const NAV: { page: Page; label: string; icon: LucideIcon; route: Route }[] = [
   { page: 'notes', label: 'Notes', icon: BookOpen, route: { page: 'notes' } },
   { page: 'tests', label: 'Tests', icon: ListChecks, route: { page: 'tests' } },
   { page: 'vocab', label: 'Vocabulary', icon: Languages, route: { page: 'vocab' } },
+  { page: 'writing', label: 'Writing', icon: PenLine, route: { page: 'writing' } },
   { page: 'stats', label: 'Stats', icon: BarChart3, route: { page: 'stats' } },
   { page: 'settings', label: 'Settings', icon: SettingsIcon, route: { page: 'settings' } }
 ]

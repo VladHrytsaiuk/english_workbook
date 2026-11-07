@@ -40,7 +40,7 @@ const STEPS: TourStep[] = [
     title: 'Розділи',
     body: (
       <>
-        <b>Today</b> — план на день, <b>Notes</b> — шпаргалки, <b>Tests</b> — тести, <b>Vocabulary</b> — ваші слова, <b>Stats</b> — прогрес. Перемикайтеся клавішами <Kbd>{modKey}1</Kbd>–<Kbd>{modKey}5</Kbd>, налаштування —{' '}
+        <b>Today</b> — план на день, <b>Notes</b> — шпаргалки, <b>Tests</b> — тести, <b>Vocabulary</b> — ваші слова, <b>Writing</b> — письмо й переписка, <b>Stats</b> — прогрес. Перемикайтеся клавішами <Kbd>{modKey}1</Kbd>–<Kbd>{modKey}6</Kbd>, налаштування —{' '}
         <Kbd>{modKey},</Kbd>.
       </>
     )
@@ -102,6 +102,17 @@ const STEPS: TourStep[] = [
       <>
         <b>Review</b> (або <Kbd>R</Kbd>) запускає повторення за алгоритмом FSRS: слово повертається якраз перед тим, як ви б його забули. Режими чергуються: картка, вписати слово, пропуск у вашому реченні, вибір перекладу.
         Оцінюйте себе клавішами <Kbd>1</Kbd>–<Kbd>4</Kbd> — Again, Hard, Good, Easy.
+      </>
+    )
+  },
+  {
+    route: { page: 'writing' },
+    target: 'writing-hub',
+    placement: 'bottom',
+    title: 'Письмо й переписка',
+    body: (
+      <>
+        Раз на місяць — <b>завдання на письмо</b> (з вашими словами за бажанням): AI оцінює текст за чотирма критеріями, показує помилки з поясненнями й виправлену версію. А в <b>переписці</b> ви листуєтеся з AI в ролі орендодавця, інтерв'юера чи друга й отримуєте оцінку розмови. Ваші тексти зберігаються в папці <code>writing/</code>.
       </>
     )
   },
@@ -186,7 +197,7 @@ export function Tour() {
   useEffect(() => {
     if (!tourOpen) return
     const on = (e: KeyboardEvent): void => {
-      if (['ArrowRight', 'Enter', 'ArrowLeft', 'Escape'].includes(e.key) || ((e.metaKey || e.ctrlKey) && /^[1-5,]$/.test(e.key))) {
+      if (['ArrowRight', 'Enter', 'ArrowLeft', 'Escape'].includes(e.key) || ((e.metaKey || e.ctrlKey) && /^[1-6,]$/.test(e.key))) {
         e.preventDefault()
         e.stopPropagation()
       }

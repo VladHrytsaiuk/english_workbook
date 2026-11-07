@@ -2,7 +2,7 @@ import { modKey } from './utils'
 
 /** Keyboard shortcuts shown in Help and Settings. */
 export const SHORTCUTS: [keys: string, what: string][] = [
-  [`${modKey} 1 – ${modKey} 5`, 'Today, Notes, Tests, Vocabulary, Stats'],
+  [`${modKey} 1 – ${modKey} 6`, 'Today, Notes, Tests, Vocabulary, Writing, Stats'],
   [`${modKey} ,`, 'Settings'],
   [`${modKey} F  or  /`, 'Search notes / vocabulary'],
   [`${modKey} N`, 'Add a word (vocabulary)'],

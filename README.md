@@ -68,6 +68,7 @@ format specs.
 ├── notes/             ← cheat sheets (*.md, subfolders allowed)
 ├── tests/             ← tests (*.md, subfolders allowed)
 ├── vocabulary/        ← word lists (*.md) imported into Vocabulary
+├── writing/           ← readable copies of your checked texts and conversations
 ├── .workbook/         ← your progress: words, reviews, test results (managed by the app)
 ├── NOTES_FORMAT.md    ← how to write notes (with an example and an AI checklist)
 ├── TEST_FORMAT.md     ← the test-format spec (give it to Claude to generate tests)
@@ -200,6 +201,25 @@ card); two correct answers in a row clear the mark. The results screen lists *Wo
 them in) and the complete test format, so a chat that knows nothing about the app can write a vocabulary test for exactly
 your words — save its answer as a `.md` file in `tests/`.
 
+### Writing & correspondence
+
+**Writing** (`⌘5`) has two parts:
+
+- **Writing of the month**: a task (email, opinion, description, story or review — or your own topic), 120–200 words, with up to
+  5 words from your vocabulary to try to use (*give up* is found in *gave up*). The draft is saved as you type. An AI (the
+  provider you chose for translation: Gemini or Claude) evaluates it on **four criteria from 0 to 5** — task & ideas,
+  organisation & style, vocabulary, grammar. The percentage is calculated by the app; the AI adds a CEFR level, strengths,
+  priorities, **corrections with explanations** (marked in your text) and a corrected version. It also shows whether you used your
+  target words correctly.
+- **Correspondence**: choose a real-life situation (a message to a landlord, a job interview, a complaint, a doctor's appointment…)
+  or describe your own. An AI plays the other person; with *Tips while chatting* on, a short note appears under a message
+  with a clear mistake. *Finish & get feedback* evaluates the conversation in the same way.
+
+Your most common kinds of mistakes and your scores over time are on the Writing page, and a readable Markdown copy of every
+checked text goes to the `writing/` folder of your workbook. The feedback is in Ukrainian by default (Settings → Writing);
+corrected English always stays English. The AI's answer is validated before it is shown (a correction is kept only if its quote
+is really in your text), but the score is feedback to track your progress, not an exam result.
+
 ### Stats & mistakes bank
 
 Accuracy over time and per topic, tests completed and a study streak. Every wrongly answered question goes into the
@@ -210,7 +230,7 @@ in a row** (anywhere — normal tests count too). Each reading sub-question coun
 
 | Keys | Action |
 |---|---|
-| `⌘1` … `⌘5`, `⌘,` | Today, Notes, Tests, Vocabulary, Stats, Settings |
+| `⌘1` … `⌘6`, `⌘,` | Today, Notes, Tests, Vocabulary, Writing, Stats, Settings |
 | `⌘F` or `/` | Search notes / vocabulary |
 | `↵` | Start test · check answer · next question |
 | `1`–`9` | Pick an option / chunk (order) / match |
@@ -234,6 +254,7 @@ iCloud Drive) together with your notes and tests:
 | `vocabulary.json` | saved words with deck, tags, details and FSRS state |
 | `decks.json` | vocabulary decks |
 | `vocab-reviews.json` | review history (for stats) |
+| `writing.json` | your texts, conversations and their evaluations |
 | `vocab-files.json` | what each `vocabulary/*.md` file contained last time (to detect edits) |
 | `attempts.json` | every test attempt: date, test, mode, per-question result |
 | `mistakes.json` | the mistakes bank (with a snapshot of each question) |

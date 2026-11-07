@@ -294,6 +294,27 @@ export function SettingsPage() {
             <VoicePicker value={settings.voiceName} onChange={(voiceName) => void updateSettings({ voiceName })} />
           </Section>
 
+          <Section title="Writing" description="Feedback on texts and correspondence comes from the translation provider you chose (Gemini or Claude).">
+            <Row label="Language of the feedback" description="Explanations, comments and tips. The corrected English always stays in English.">
+              <Segmented<string>
+                value={settings.feedbackLanguage}
+                onChange={(v) => void updateSettings({ feedbackLanguage: v as 'uk' | 'en' })}
+                options={[
+                  { value: 'uk', label: 'Українська' },
+                  { value: 'en', label: 'English' }
+                ]}
+              />
+            </Row>
+            <Row label="Tips while chatting" description="A short note under your message when it has a clear mistake.">
+              <Switch checked={settings.chatTips} onCheckedChange={(chatTips) => void updateSettings({ chatTips })} />
+            </Row>
+            <Row label="Writing folder" description="A readable copy of every checked text is saved there.">
+              <Button variant="outline" size="sm" onClick={() => void window.api.content.openFolder('writing')}>
+                <FolderOpen /> Open
+              </Button>
+            </Row>
+          </Section>
+
           <Section title="Data" description="Words, review history, test results and the mistakes bank are stored in the .workbook folder inside your workbook, so they're backed up and synced with your notes. Settings, API keys and the translation cache stay on this Mac.">
             <Card className="flex items-center gap-3 px-4 py-3">
               <span className="selectable flex-1 truncate font-mono text-[12px] text-muted-foreground">{dataDir}</span>

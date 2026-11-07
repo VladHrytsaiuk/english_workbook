@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, BookOpen, Check, ClipboardCheck, Flame, GraduationCap, Languages, ListChecks, Play, Sparkles, Target, TrendingDown } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, ClipboardCheck, Flame, GraduationCap, Languages, ListChecks, PenLine, Play, Sparkles, Target, TrendingDown } from 'lucide-react'
 import { useMemo } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,8 @@ import { cn, pct, plural, relativeTime } from '@/lib/utils'
 import { ALL_SCOPE, buildQueue, speak, todayCounts } from '@/lib/vocab'
 import { statusOf } from '@shared/srs'
 import { ALL_KINDS_FOR_TEST, MIN_WORDS_FOR_TEST, buildWordTest, filterBySource, isTestable } from '@shared/wordTest'
+import { countWords } from '@shared/writing'
+import { monthKey, taskForMonth } from '@shared/writingTasks'
 
 function greeting(now: Date): string {
   const h = now.getHours()
@@ -33,8 +35,9 @@ export function TodayPage() {
   const { data: vocab } = useAsync(() => window.api.vocab.list())
   const { data: logs } = useAsync(() => window.api.vocab.reviews())
   const { data: decks } = useAsync(() => window.api.decks.list())
+  const { data: writing } = useAsync(() => window.api.writing.list())
   const now = useMemo(() => new Date(), [attempts, vocab, logs])
-  const ready = attempts && bank && vocab && logs && settings
+  const ready = attempts && bank && vocab && logs && settings && writing
 
   const view = useMemo(() => {
     if (!ready) return null
@@ -159,6 +162,26 @@ export function TodayPage() {
       })
     }
 
+    // 5. Writing of the month: shown until it is done (and on the day it was done)
+    const month = monthKey(now)
+    const monthEssay = writing.find((e) => e.kind === 'essay' && e.month === month)
+    const writingDone = monthEssay?.status === 'evaluated'
+    if (!writingDone || dayKey(monthEssay.updatedAt) === today) {
+      plan.push({
+        id: 'writing',
+        icon: PenLine,
+        title: writingDone ? 'Writing of the month done' : monthEssay ? 'Finish your text of the month' : 'Writing of the month',
+        detail: writingDone
+          ? `${monthEssay.title} · ${monthEssay.evaluation?.overall}%${monthEssay.evaluation?.cefr ? ` · ${monthEssay.evaluation.cefr}` : ''}`
+          : monthEssay
+            ? `${monthEssay.title} · draft, ${plural(countWords(monthEssay.text), 'word')} so far`
+            : `${taskForMonth(month).title} · about 20 min · an AI checks your text`,
+        done: Boolean(writingDone),
+        doneText: 'Done',
+        action: { label: monthEssay ? 'Continue' : 'Start', run: () => navigate(monthEssay ? { page: 'writing', entryId: monthEssay.id } : { page: 'writing', start: 'essay' }) }
+      })
+    }
+
     // Activity heatmap: last 12 weeks, Monday-first columns.
     const days: { key: string; date: Date; count: number }[] = []
     const end = new Date(now)
@@ -189,7 +212,7 @@ export function TodayPage() {
       tests: { done: attempts.filter((a) => a.mode === 'full' && a.completed).length, accuracy: answers30.length ? pct(answers30.filter((r) => r.correct).length, answers30.length) : null },
       recentWords: [...vocab].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10)
     }
-  }, [ready, attempts, bank, vocab, logs, decks, settings, tests, now, navigate, startSession])
+  }, [ready, attempts, bank, vocab, logs, decks, writing, settings, tests, now, navigate, startSession])
 
   if (!view) return <div className="flex-1" />
 

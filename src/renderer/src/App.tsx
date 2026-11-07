@@ -17,6 +17,7 @@ import { StatsPage } from '@/pages/StatsPage'
 import { TestsPage } from '@/pages/TestsPage'
 import { TodayPage } from '@/pages/TodayPage'
 import { VocabularyPage } from '@/pages/VocabularyPage'
+import { WritingPage } from '@/pages/WritingPage'
 
 function Shell() {
   const { settings, route, contentLoaded, tourOpen, setTourOpen } = useApp()
@@ -34,7 +35,7 @@ function Shell() {
   if (!settings) return <div className="drag h-full" />
   if (!settings.contentDir) return <SetupPage />
 
-  const key = route.page === 'run' ? `run-${route.session.id}` : route.page === 'review' ? `review-${scopeKey(route.scope)}-${route.cram ? 'cram' : 'due'}` : route.page
+  const key = route.page === 'run' ? `run-${route.session.id}` : route.page === 'review' ? `review-${scopeKey(route.scope)}-${route.cram ? 'cram' : 'due'}` : route.page === 'writing' ? `writing-${route.entryId ?? 'hub'}` : route.page
   return (
     <div className="flex h-full overflow-hidden">
       <Sidebar />
@@ -54,6 +55,7 @@ function Shell() {
             {route.page === 'run' && <RunPage session={route.session} />}
             {route.page === 'vocab' && <VocabularyPage />}
             {route.page === 'review' && <ReviewPage scope={route.scope} cram={route.cram} back={route.back} />}
+            {route.page === 'writing' && <WritingPage />}
             {route.page === 'stats' && <StatsPage />}
             {route.page === 'settings' && <SettingsPage />}
           </motion.div>

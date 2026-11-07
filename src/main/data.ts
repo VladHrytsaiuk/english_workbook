@@ -15,6 +15,8 @@ const DEFAULT_SETTINGS: Settings = {
   shuffleAnswers: true,
   showTopics: false,
   forgiveTypos: true,
+  feedbackLanguage: 'uk',
+  chatTips: true,
   desiredRetention: 0.9,
   newCardsPerDay: 20,
   reviewsPerDay: 200,

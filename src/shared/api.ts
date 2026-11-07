@@ -4,6 +4,9 @@ import type {
   ReviewMode,
   SrsGrade,
   VocabInput,
+  NewWritingEntry,
+  WritingEntry,
+  WritingResult,
   VocabReviewLog,
   ReadingTextResult,
   VocabSyncSummary,
@@ -33,7 +36,7 @@ export interface WorkbookApi {
     setup(dir: string): Promise<{ created: string[]; settings: Settings }>
     notes(): Promise<NoteDoc[]>
     tests(): Promise<ParsedTest[]>
-    openFolder(sub?: 'vocabulary' | 'tests'): Promise<void>
+    openFolder(sub?: 'vocabulary' | 'tests' | 'writing'): Promise<void>
     /** Opens a format spec (TEST_FORMAT.md / VOCAB_FORMAT.md / NOTES_FORMAT.md) from the workbook in the default editor. */
     openSpec(name: 'TEST_FORMAT.md' | 'VOCAB_FORMAT.md' | 'NOTES_FORMAT.md'): Promise<void>
     revealFile(kind: 'notes' | 'tests', id: string): Promise<void>
@@ -68,6 +71,17 @@ export interface WorkbookApi {
     /** Fills part of speech, IPA, level, topic and examples with Gemini / Claude. */
     enrich(id: string): Promise<{ ok: true; entry: VocabEntry } | { ok: false; message: string }>
     exportCsv(ids?: string[]): Promise<string | null>
+  }
+  writing: {
+    list(): Promise<WritingEntry[]>
+    create(input: NewWritingEntry): Promise<WritingEntry>
+    /** Autosave of an essay draft. */
+    saveText(id: string, text: string): Promise<void>
+    remove(id: string): Promise<void>
+    /** AI feedback and scores for an essay or a conversation. */
+    evaluate(id: string): Promise<WritingResult>
+    /** Sends the learner's message; the partner's reply (and a tip about a mistake) is added to the entry. */
+    chatTurn(id: string, text: string): Promise<WritingResult>
   }
   decks: {
     list(): Promise<Deck[]>

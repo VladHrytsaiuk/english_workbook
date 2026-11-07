@@ -53,6 +53,7 @@ export function prepareContentDir(dir: string): { created: string[] } {
 export function ensureWorkbookExtras(dir: string): string[] {
   const created: string[] = []
   mkdirSync(join(dir, 'vocabulary'), { recursive: true })
+  mkdirSync(join(dir, 'writing'), { recursive: true })
   for (const [name, body] of [
     ['TEST_FORMAT.md', testFormat],
     ['VOCAB_FORMAT.md', vocabFormat],

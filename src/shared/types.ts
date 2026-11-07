@@ -271,6 +271,10 @@ export interface Settings {
   showTopics: boolean
   /** A one-letter spelling slip in a vocabulary question counts as correct. */
   forgiveTypos: boolean
+  /** Language of AI feedback on writing and chats (the corrected English stays English). */
+  feedbackLanguage: 'uk' | 'en'
+  /** Short tips about mistakes while chatting in a correspondence exercise. */
+  chatTips: boolean
   /** FSRS target probability of remembering a card when it is due (0.8–0.97). */
   desiredRetention: number
   newCardsPerDay: number
@@ -290,6 +294,83 @@ export interface SecretsStatus {
   gemini: boolean
   encryptionAvailable: boolean
 }
+
+// ───────────────────────── Writing ─────────────────────────
+
+export type WritingCriterion = 'content' | 'style' | 'vocabulary' | 'grammar'
+export const MISTAKE_CATEGORIES = ['grammar', 'tense', 'article', 'preposition', 'word order', 'vocabulary', 'spelling', 'punctuation', 'style'] as const
+export type MistakeCategory = (typeof MISTAKE_CATEGORIES)[number]
+
+export interface WritingCorrection {
+  /** Exactly as it stands in the learner's text. */
+  original: string
+  corrected: string
+  explanation: string
+  category: MistakeCategory
+}
+
+export interface WritingEvaluation {
+  /** 0–5 for each criterion. */
+  scores: Record<WritingCriterion, number>
+  /** 0–100, calculated from the four scores by the app (not by the AI). */
+  overall: number
+  cefr: string
+  summary: string
+  strengths: string[]
+  improvements: string[]
+  corrections: WritingCorrection[]
+  /** The learner's text rewritten without the mistakes. */
+  improved: string
+  targetWords: { word: string; used: boolean; correct: boolean; note: string }[]
+  provider: TranslationProvider
+  evaluatedAt: string
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  /** A short note about a mistake in this (user) message, when tips are on. */
+  tip?: string
+  at: string
+}
+
+/** An essay or a correspondence exercise (kept together: one history, one evaluation format). */
+export interface WritingEntry {
+  id: string
+  kind: 'essay' | 'chat'
+  title: string
+  /** Essay: the task (Markdown). Chat: the situation shown to the learner. */
+  prompt: string
+  taskId?: string
+  /** 'YYYY-MM' of the day it was started. */
+  month: string
+  createdAt: string
+  updatedAt: string
+  status: 'draft' | 'evaluated'
+  /** Words from the learner's vocabulary to try to use. */
+  targetWords: string[]
+  // essay
+  text: string
+  minWords?: number
+  maxWords?: number
+  // chat
+  scenarioId?: string
+  aiRole?: string
+  register?: 'formal' | 'informal'
+  goals?: string[]
+  messages: ChatMessage[]
+  /** The partner wrapped up the conversation: time to ask for feedback. */
+  chatDone?: boolean
+  evaluation?: WritingEvaluation
+}
+
+/** What the window sends to start an essay or a conversation. */
+export type NewWritingEntry = Pick<WritingEntry, 'kind' | 'title' | 'prompt' | 'taskId' | 'targetWords' | 'minWords' | 'maxWords' | 'scenarioId' | 'aiRole' | 'register' | 'goals'> & {
+  /** The partner's first message (a conversation that does not start with the learner). */
+  opening?: string
+}
+
+export type WritingResult = { ok: true; entry: WritingEntry } | { ok: false; code: TranslateErrorCode; message: string }
 
 export type TranslateErrorCode = 'no-key' | 'offline' | 'quota' | 'auth' | 'rate-limit' | 'too-long' | 'unknown'
 

@@ -19,6 +19,7 @@ export type Route =
   | { page: 'run'; session: RunSession; back: Route }
   | { page: 'vocab'; scope?: VocabScope }
   | { page: 'review'; scope: VocabScope; cram?: boolean; back: Route }
+  | { page: 'writing'; entryId?: string; start?: 'essay' }
   | { page: 'stats' }
   | { page: 'settings' }
 
