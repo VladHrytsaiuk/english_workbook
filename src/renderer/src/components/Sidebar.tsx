@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, CalendarCheck, CircleHelp, Languages, ListChecks, Monitor, Moon, PenLine, Settings as SettingsIcon, Sun } from 'lucide-react'
+import { BarChart3, BookOpen, CalendarCheck, CircleHelp, Languages, ListChecks, Monitor, Moon, PenLine, Play, Settings as SettingsIcon, Shuffle, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { HelpDialog } from './HelpDialog'
 import { motion } from 'framer-motion'
@@ -11,13 +11,39 @@ import type { ThemePref } from '@shared/types'
 import { Tooltip } from './ui/tooltip'
 
 const NAV: { page: Page; label: string; icon: LucideIcon; route: Route }[] = [
-  { page: 'today', label: 'Today', icon: CalendarCheck, route: { page: 'today' } },
+  {
+    page: 'today',
+    label: 'Today',
+    icon: CalendarCheck,
+    route: { page: 'today' }
+  },
   { page: 'notes', label: 'Notes', icon: BookOpen, route: { page: 'notes' } },
   { page: 'tests', label: 'Tests', icon: ListChecks, route: { page: 'tests' } },
-  { page: 'vocab', label: 'Vocabulary', icon: Languages, route: { page: 'vocab' } },
-  { page: 'writing', label: 'Writing', icon: PenLine, route: { page: 'writing' } },
+  {
+    page: 'vocab',
+    label: 'Vocabulary',
+    icon: Languages,
+    route: { page: 'vocab' }
+  },
+  {
+    page: 'writing',
+    label: 'Writing',
+    icon: PenLine,
+    route: { page: 'writing' }
+  },
+  {
+    page: 'irregular',
+    label: 'Irregular verbs',
+    icon: Shuffle,
+    route: { page: 'irregular' }
+  },
   { page: 'stats', label: 'Stats', icon: BarChart3, route: { page: 'stats' } },
-  { page: 'settings', label: 'Settings', icon: SettingsIcon, route: { page: 'settings' } }
+  {
+    page: 'settings',
+    label: 'Settings',
+    icon: SettingsIcon,
+    route: { page: 'settings' }
+  }
 ]
 
 const THEMES: { value: ThemePref; icon: LucideIcon; label: string }[] = [
@@ -27,7 +53,7 @@ const THEMES: { value: ThemePref; icon: LucideIcon; label: string }[] = [
 ]
 
 export function Sidebar() {
-  const { route, navigate, notes, tests, settings, updateSettings } = useApp()
+  const { route, navigate, pausedRun, notes, tests, settings, updateSettings } = useApp()
   const [helpOpen, setHelpOpen] = useState(false)
   const { data: vocab } = useAsync(() => window.api.vocab.list())
   const { data: mistakes } = useAsync(() => window.api.progress.mistakes())
@@ -55,18 +81,28 @@ export function Sidebar() {
 
   return (
     <aside className="flex w-[220px] shrink-0 flex-col border-r bg-sidebar">
-      <div className={cn("drag shrink-0", window.api.platform === "darwin" ? "h-[52px]" : "h-4")} />
+      <div className={cn('drag shrink-0', window.api.platform === 'darwin' ? 'h-[52px]' : 'h-4')} />
       <div className="px-4 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-[13px] font-bold text-white shadow-sm">
-            Ew
-          </div>
+          <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-[13px] font-bold text-white shadow-sm">Ew</div>
           <div className="leading-tight">
             <div className="text-[13.5px] font-semibold tracking-tight">EnglishWorkbook</div>
             <div className="text-[11px] text-muted-foreground">Personal study kit</div>
           </div>
         </div>
       </div>
+      {pausedRun && (
+        <button
+          onClick={() => navigate(pausedRun)}
+          className="mx-2.5 mb-2 flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/[0.07] px-2.5 py-2 text-left text-[12.5px] transition-colors hover:bg-primary/[0.12]"
+        >
+          <Play className="size-3.5 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="block font-medium">Test in progress</span>
+            <span className="block truncate text-muted-foreground">Tap to continue</span>
+          </span>
+        </button>
+      )}
       <nav className="flex flex-1 flex-col gap-0.5 px-2.5" data-tour="nav">
         {NAV.map((item, i) => {
           const isActive = active === item.page

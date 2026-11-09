@@ -4,6 +4,20 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.8.0] — 2026-11-09
+
+### Added
+- **Irregular verbs** (new section, `⌘6`; Stats moved to `⌘7`): 180 verbs from the irregular-verbs note, in seven groups by the pattern of
+  their forms, the 60 most frequent first. Practice: the infinitive is shown and you type V2 and V3 (exact spelling; "was / were" accepts
+  either); wrong verbs return a few cards later; FSRS schedules the rest. Scopes: top 60, all, one group, weak verbs; 5/10/20 new per
+  session. *Reference* tab: searchable table with a **Cover V2 & V3** self-test mode. A plan item on Today when verbs are due; a tour step.
+- **Find in note** (`⌘F`): searches inside the open note with "n of m", next/previous (`↵`, `⇧↵`) and the current match highlighted.
+  Searching the list of notes moved to `⌘K` (and `/`).
+
+### Fixed
+- **A test is no longer ended when you open another page** (e.g. the notes to look something up). It stays paused with its answers, and a
+  *Test in progress* button in the sidebar brings you back. Only *Exit* or the results screen close it.
+
 ## [1.7.0] — 2026-11-08
 
 ### Added

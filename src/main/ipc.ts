@@ -9,6 +9,7 @@ import { learningDataDir, useWorkbookDir } from './storage'
 import { syncVocabularyFolder } from './vocabFiles'
 import { clearTranslationCache, enrichWord, generateReadingPassage, translate, translationCacheSize } from './translate'
 import * as vocab from './vocab'
+import * as irregular from './irregular'
 import * as writing from './writing'
 
 function contentDir(): string {
@@ -158,6 +159,9 @@ export function registerIpc(): void {
     return res.filePath
   })
 
+  ipcMain.handle('irregular:progress', () => irregular.irregularProgress())
+  ipcMain.handle('irregular:review', (_e, id: string, grade: number) => irregular.reviewIrregular(String(id), grade as SrsGrade))
+  ipcMain.handle('irregular:reset', (_e, list?: unknown) => irregular.resetIrregular(Array.isArray(list) ? ids(list) : undefined))
   ipcMain.handle('writing:list', () => writing.listWriting())
   ipcMain.handle('writing:create', (_e, input: NewWritingEntry) => writing.createWriting(input))
   ipcMain.handle('writing:saveText', (_e, id: string, text: string) => writing.saveWritingText(String(id), String(text ?? '')))

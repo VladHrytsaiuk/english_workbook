@@ -193,3 +193,13 @@
 .recharts-cartesian-grid line {
   stroke: hsl(var(--border));
 }
+
+::highlight(find) {
+  background-color: rgb(250 204 21 / 0.4);
+  color: inherit;
+}
+
+::highlight(find-current) {
+  background-color: rgb(249 115 22 / 0.65);
+  color: inherit;
+}

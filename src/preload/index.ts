@@ -55,6 +55,11 @@ const api: WorkbookApi = {
     enrich: (id) => invoke('vocab:enrich', id),
     exportCsv: (ids) => invoke('vocab:exportCsv', ids)
   },
+  irregular: {
+    progress: () => invoke('irregular:progress'),
+    review: (id, grade) => invoke('irregular:review', id, grade),
+    reset: (ids) => invoke('irregular:reset', ids)
+  },
   writing: {
     list: () => invoke('writing:list'),
     create: (input) => invoke('writing:create', input),

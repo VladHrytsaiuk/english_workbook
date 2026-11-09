@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { Progress } from '@/components/ui/progress'
 import { useKeydown } from '@/hooks/useHotkey'
-import { type RunSession, useApp } from '@/lib/store'
+import { type Route, type RunSession, useApp } from '@/lib/store'
 import { cn, isTyping, uid } from '@/lib/utils'
 import { checkAnswer, formatCorrectAnswer, formatUserAnswer } from '@shared/answer'
 import { arrangeItems } from '@shared/arrange'
@@ -49,8 +49,8 @@ function buildAttempt(session: RunSession, items: TestItem[], startedAt: string,
   }
 }
 
-export function RunPage({ session }: { session: RunSession }) {
-  const { navigate, route, settings, bumpData, toast } = useApp()
+export function RunPage({ session, back }: { session: RunSession; back: Route }) {
+  const { navigate, settings, bumpData, toast } = useApp()
   // Question and option order is fixed once per session (going back to a question shows the same order).
   const items = useMemo(
     () => arrangeItems(session.items, { questions: settings?.shuffleQuestions ?? true, answers: settings?.shuffleAnswers ?? true }),
@@ -71,7 +71,6 @@ export function RunPage({ session }: { session: RunSession }) {
   const result = item ? graded[item.key] : undefined
   const locked = Boolean(result)
   const answeredCount = Object.keys(graded).length
-  const back = route.page === 'run' ? route.back : { page: 'tests' as const }
 
   const save = useCallback(
     async (completed: boolean): Promise<Attempt | null> => {
@@ -99,7 +98,7 @@ export function RunPage({ session }: { session: RunSession }) {
       void save(false)
       toast(`Progress saved: ${answeredCount} of ${items.length} answered.`)
     }
-    navigate(back)
+    navigate(back, { end: true })
   }
 
   const check = (giveUp = false): void => {
@@ -153,7 +152,7 @@ export function RunPage({ session }: { session: RunSession }) {
   })
 
   if (finished) {
-    return <Results session={session} attempt={finished} onBack={() => navigate(back)} />
+    return <Results session={session} attempt={finished} onBack={() => navigate(back, { end: true })} />
   }
 
   if (!item) return null

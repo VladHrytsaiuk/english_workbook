@@ -117,6 +117,17 @@ const STEPS: TourStep[] = [
     )
   },
   {
+    route: { page: 'irregular' },
+    target: 'irregular-start',
+    placement: 'bottom',
+    title: 'Неправильні дієслова',
+    body: (
+      <>
+        Усі <b>180 дієслів</b> з вашої шпаргалки, розкладені за групами. Показується початкова форма, а ви вписуєте <b>V2</b> і <b>V3</b>. Помилкове дієслово повертається через кілька карток і планується раніше (той самий FSRS). Вкладка <b>Reference</b> — таблиця, де можна закрити V2/V3 й перевіряти себе.
+      </>
+    )
+  },
+  {
     route: { page: 'stats' },
     target: 'stats',
     placement: 'bottom',
@@ -197,7 +208,7 @@ export function Tour() {
   useEffect(() => {
     if (!tourOpen) return
     const on = (e: KeyboardEvent): void => {
-      if (['ArrowRight', 'Enter', 'ArrowLeft', 'Escape'].includes(e.key) || ((e.metaKey || e.ctrlKey) && /^[1-6,]$/.test(e.key))) {
+      if (['ArrowRight', 'Enter', 'ArrowLeft', 'Escape'].includes(e.key) || ((e.metaKey || e.ctrlKey) && /^[1-7,]$/.test(e.key))) {
         e.preventDefault()
         e.stopPropagation()
       }

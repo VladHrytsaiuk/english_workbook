@@ -407,3 +407,23 @@ export interface VocabSyncSummary {
   /** Names of files that changed in this sync (for the notification). */
   changed: string[]
 }
+
+// ───────────── Irregular verbs ─────────────
+
+/** 1 all three forms equal · 2 V2 = V3 · 3 V1 = V3 · 4 V1 = V2 · 5 all different · 6 rare/literary · 7 two correct variants (learnt/learned). */
+export type IrregularGroup = 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+export interface IrregularVerb {
+  id: string
+  v1: string
+  /** Several correct forms are written "burnt / burned". */
+  v2: string
+  v3: string
+  uk: string
+  group: IrregularGroup
+  /** Rank among the 60 most frequent irregular verbs. */
+  top?: number
+}
+
+/** FSRS card of every verb that was started, keyed by verb id (`<workbook>/.workbook/irregular.json`). */
+export type IrregularProgress = Record<string, SrsCard>

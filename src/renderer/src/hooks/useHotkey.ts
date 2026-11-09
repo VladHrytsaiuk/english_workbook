@@ -1,7 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { createContext, useContext, useEffect, useRef } from 'react'
+
+/** False for a view that is kept alive but hidden (a paused test): its keyboard shortcuts must stay silent. */
+export const ViewActive = createContext(true)
 
 /** Registers a window keydown listener with a stable reference to the latest handler. */
-export function useKeydown(handler: (e: KeyboardEvent) => void, active = true): void {
+export function useKeydown(handler: (e: KeyboardEvent) => void, activeProp = true): void {
+  const viewActive = useContext(ViewActive)
+  const active = activeProp && viewActive
   const ref = useRef(handler)
   ref.current = handler
   useEffect(() => {

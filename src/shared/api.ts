@@ -3,6 +3,8 @@ import type {
   Deck,
   ReviewMode,
   SrsGrade,
+  SrsCard,
+  IrregularProgress,
   VocabInput,
   NewWritingEntry,
   WritingEntry,
@@ -71,6 +73,12 @@ export interface WorkbookApi {
     /** Fills part of speech, IPA, level, topic and examples with Gemini / Claude. */
     enrich(id: string): Promise<{ ok: true; entry: VocabEntry } | { ok: false; message: string }>
     exportCsv(ids?: string[]): Promise<string | null>
+  }
+  irregular: {
+    progress(): Promise<IrregularProgress>
+    review(id: string, grade: SrsGrade): Promise<SrsCard | null>
+    /** Forgets the progress of the given verbs, or of all of them. */
+    reset(ids?: string[]): Promise<void>
   }
   writing: {
     list(): Promise<WritingEntry[]>

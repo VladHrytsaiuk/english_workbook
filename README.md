@@ -220,6 +220,15 @@ checked text goes to the `writing/` folder of your workbook. The feedback is in 
 corrected English always stays English. The AI's answer is validated before it is shown (a correction is kept only if its quote
 is really in your text), but the score is feedback to track your progress, not an exam result.
 
+### Irregular verbs
+
+**Irregular verbs** (`⌘6`) holds all 180 verbs from the `06-irregular-verbs` note, grouped by the pattern of their forms (cut–cut–cut,
+buy–bought–bought, go–went–gone…) with the 60 most frequent first. You see the infinitive and type **V2 and V3**; a wrong verb
+comes back a few cards later and is scheduled sooner by FSRS (the same algorithm as for words). Practise the top 60, everything, one
+group or only your weak verbs; choose how many new verbs per session. *Reference* is the full table with a **Cover V2 & V3** mode for
+self-testing. Due verbs appear in the plan on Today. The data is built into the app (`scripts/gen-irregular.mjs` regenerates it from the
+note); your progress is in `.workbook/irregular.json`.
+
 ### Stats & mistakes bank
 
 Accuracy over time and per topic, tests completed and a study streak. Every wrongly answered question goes into the
@@ -230,8 +239,9 @@ in a row** (anywhere — normal tests count too). Each reading sub-question coun
 
 | Keys | Action |
 |---|---|
-| `⌘1` … `⌘6`, `⌘,` | Today, Notes, Tests, Vocabulary, Writing, Stats, Settings |
-| `⌘F` or `/` | Search notes / vocabulary |
+| `⌘1` … `⌘7`, `⌘,` | Today, Notes, Tests, Vocabulary, Writing, Irregular verbs, Stats (`⌘8` Settings) |
+| `⌘F` | Find inside the open note (`↵` / `⇧↵` next / previous, `Esc` close) |
+| `⌘K` or `/` | Search the list of notes / vocabulary |
 | `↵` | Start test · check answer · next question |
 | `1`–`9` | Pick an option / chunk (order) / match |
 | `T` `F` `N` | True / False / Not Given |

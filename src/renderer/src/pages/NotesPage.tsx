@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { BookOpen, ExternalLink, FolderOpen, Search, X } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronUp, ExternalLink, FolderOpen, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { Markdown } from '@/components/Markdown'
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { Tooltip } from '@/components/ui/tooltip'
+import { useFindInPage } from '@/hooks/useFindInPage'
 import { useKeydown } from '@/hooks/useHotkey'
 import { useApp } from '@/lib/store'
 import { cn, isTyping, modKey } from '@/lib/utils'
@@ -64,7 +65,10 @@ function useSearchHighlight(container: React.RefObject<HTMLElement | null>, quer
     if (!registry || !HighlightCtor) return
     registry.delete('search')
     const el = container.current
-    const terms = query.toLowerCase().split(/\s+/).filter((t) => t.length > 1)
+    const terms = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 1)
     if (!el || !terms.length) return
     const ranges: Range[] = []
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
@@ -86,7 +90,11 @@ function useSearchHighlight(container: React.RefObject<HTMLElement | null>, quer
       registry.set('search', new HighlightCtor(...ranges))
       const rect = ranges[0].getBoundingClientRect()
       const scroller = el.closest('[data-scroll]')
-      if (scroller && rect.top) scroller.scrollTo({ top: scroller.scrollTop + rect.top - 180, behavior: 'smooth' })
+      if (scroller && rect.top)
+        scroller.scrollTo({
+          top: scroller.scrollTop + rect.top - 180,
+          behavior: 'smooth'
+        })
     }
     return () => {
       registry.delete('search')
@@ -107,16 +115,42 @@ export function NotesPage() {
   const select = (id: string): void => navigate({ page: 'notes', noteId: id })
 
   useSearchHighlight(bodyRef, query, selected?.id)
+  const find = useFindInPage(bodyRef, selected?.id)
+  const findRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 })
   }, [selected?.id])
 
   useKeydown((e) => {
-    if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'k')) {
+    // ⌘F searches inside the open note; ⌘K (or /) searches the list of notes.
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'f') {
+      e.preventDefault()
+      find.setOpen(true)
+      requestAnimationFrame(() => {
+        findRef.current?.focus()
+        findRef.current?.select()
+      })
+      return
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       searchRef.current?.focus()
       searchRef.current?.select()
+      return
+    }
+    if (find.open && e.key === 'Escape' && document.activeElement !== searchRef.current) {
+      find.close()
+      return
+    }
+    if (find.open && e.key === 'Enter' && e.target === findRef.current) {
+      e.preventDefault()
+      find.step(e.shiftKey ? -1 : 1)
+      return
+    }
+    if (find.open && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g') {
+      e.preventDefault()
+      find.step(e.shiftKey ? -1 : 1)
       return
     }
     if (e.key === '/' && !isTyping(e)) {
@@ -125,6 +159,7 @@ export function NotesPage() {
       return
     }
     const inSearch = document.activeElement === searchRef.current
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && document.activeElement === findRef.current) return
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && (inSearch || !isTyping(e))) {
       e.preventDefault()
       const list = hits.map((h) => h.note)
@@ -150,8 +185,12 @@ export function NotesPage() {
             </Button>
           }
         >
-          Add Markdown files to the <code className="rounded bg-muted px-1">notes/</code> folder — they appear here instantly. How to write them (with a ready-to-copy example and
-          a prompt for AI): <button className="no-drag font-medium text-primary hover:underline" onClick={() => void window.api.content.openSpec('NOTES_FORMAT.md')}>NOTES_FORMAT.md</button>.
+          Add Markdown files to the <code className="rounded bg-muted px-1">notes/</code> folder — they appear here instantly. How to write them (with a ready-to-copy example and a
+          prompt for AI):{' '}
+          <button className="no-drag font-medium text-primary hover:underline" onClick={() => void window.api.content.openSpec('NOTES_FORMAT.md')}>
+            NOTES_FORMAT.md
+          </button>
+          .
         </EmptyState>
       </div>
     )
@@ -176,12 +215,14 @@ export function NotesPage() {
                 <X className="size-3.5" />
               </button>
             ) : (
-              <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">{modKey}F</Kbd>
+              <Kbd className="absolute right-2 top-1/2 -translate-y-1/2">{modKey}K</Kbd>
             )}
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
-          {query && <div className="px-2 pb-1.5 pt-1 text-[11.5px] text-muted-foreground">{hits.length ? `${hits.length} ${hits.length === 1 ? 'note' : 'notes'}` : 'Nothing found'}</div>}
+          {query && (
+            <div className="px-2 pb-1.5 pt-1 text-[11.5px] text-muted-foreground">{hits.length ? `${hits.length} ${hits.length === 1 ? 'note' : 'notes'}` : 'Nothing found'}</div>
+          )}
           {hits.map(({ note, snippet, count }) => {
             const on = note.id === selected?.id
             return (
@@ -241,22 +282,48 @@ export function NotesPage() {
             </div>
           )}
         </div>
-        <div ref={scrollRef} data-scroll className="flex-1 overflow-y-auto" data-tour="note-body">
-          {selected && (
-            <motion.article
-              key={selected.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.18 }}
-              ref={bodyRef}
-              className="selectable mx-auto max-w-[780px] px-10 pb-24 pt-8"
-              data-translate="note"
-              data-source-title={selected.title}
-              data-source-ref={selected.id}
-            >
-              <Markdown>{selected.content}</Markdown>
-            </motion.article>
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {find.open && (
+            <div className="absolute right-6 top-3 z-20 flex items-center gap-1 rounded-xl border bg-popover/95 p-1.5 shadow-lg backdrop-blur">
+              <input
+                ref={findRef}
+              autoFocus
+                value={find.query}
+                onChange={(e) => find.setQuery(e.target.value)}
+                placeholder="Find in this note"
+                className="h-7 w-[200px] rounded-md bg-muted/70 px-2 text-[13px] outline-none placeholder:text-muted-foreground"
+              />
+              <span className="w-[54px] text-center text-[11.5px] tabular-nums text-muted-foreground">
+                {find.query ? (find.count ? `${find.current + 1} / ${find.count}` : '0') : ''}
+              </span>
+              <Button variant="ghost" size="icon-sm" disabled={!find.count} onClick={() => find.step(-1)}>
+                <ChevronUp />
+              </Button>
+              <Button variant="ghost" size="icon-sm" disabled={!find.count} onClick={() => find.step(1)}>
+                <ChevronDown />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={find.close}>
+                <X />
+              </Button>
+            </div>
           )}
+          <div ref={scrollRef} data-scroll className="flex-1 overflow-y-auto" data-tour="note-body">
+            {selected && (
+              <motion.article
+                key={selected.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+                ref={bodyRef}
+                className="selectable mx-auto max-w-[780px] px-10 pb-24 pt-8"
+                data-translate="note"
+                data-source-title={selected.title}
+                data-source-ref={selected.id}
+              >
+                <Markdown>{selected.content}</Markdown>
+              </motion.article>
+            )}
+          </div>
         </div>
       </div>
     </div>

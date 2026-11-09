@@ -19,6 +19,7 @@ export type Route =
   | { page: 'run'; session: RunSession; back: Route }
   | { page: 'vocab'; scope?: VocabScope }
   | { page: 'review'; scope: VocabScope; cram?: boolean; back: Route }
+  | { page: 'irregular' }
   | { page: 'writing'; entryId?: string; start?: 'essay' }
   | { page: 'stats' }
   | { page: 'settings' }
@@ -40,7 +41,9 @@ interface AppState {
   contentLoaded: boolean
   reloadContent(): Promise<void>
   route: Route
-  navigate(route: Route): void
+  /** Opens a page. Leaving a running test keeps it paused (`pausedRun`); pass `end` to close it for good. */
+  navigate(route: Route, opts?: { end?: boolean }): void
+  pausedRun: Extract<Route, { page: 'run' }> | null
   /** Bumped whenever attempts / mistakes / vocabulary change so pages can refetch. */
   dataVersion: number
   bumpData(): void
@@ -59,6 +62,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [tests, setTests] = useState<ParsedTest[]>([])
   const [contentLoaded, setContentLoaded] = useState(false)
   const [route, setRoute] = useState<Route>({ page: 'today' })
+  const [pausedRun, setPausedRun] = useState<Extract<Route, { page: 'run' }> | null>(null)
   const [tourOpen, setTourOpen] = useState(false)
   const [dataVersion, setDataVersion] = useState(0)
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -110,7 +114,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const startSession = useCallback((s: Omit<RunSession, 'id'>) => {
     const back = routeRef.current.page === 'run' ? routeRef.current.back : routeRef.current
+    setPausedRun(null)
     setRoute({ page: 'run', session: { ...s, id: uid() }, back })
+  }, [])
+
+  const navigate = useCallback((next: Route, opts?: { end?: boolean }) => {
+    const cur = routeRef.current
+    if (cur.page === 'run' && next.page !== 'run') setPausedRun(opts?.end ? null : cur)
+    else if (next.page === 'run') setPausedRun(null)
+    setRoute(next)
   }, [])
 
   const value = useMemo<AppState>(
@@ -123,7 +135,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       contentLoaded,
       reloadContent,
       route,
-      navigate: setRoute,
+      navigate,
+      pausedRun,
       dataVersion,
       bumpData: () => setDataVersion((v) => v + 1),
       toasts,
@@ -132,7 +145,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       tourOpen,
       setTourOpen
     }),
-    [settings, updateSettings, notes, tests, contentLoaded, reloadContent, route, dataVersion, toasts, toast, startSession, tourOpen]
+    [settings, updateSettings, notes, tests, contentLoaded, reloadContent, route, dataVersion, toasts, toast, startSession, tourOpen, navigate, pausedRun]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

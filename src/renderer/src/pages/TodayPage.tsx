@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, BookOpen, Check, ClipboardCheck, Flame, GraduationCap, Languages, ListChecks, PenLine, Play, Sparkles, Target, TrendingDown } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, ClipboardCheck, Flame, GraduationCap, Languages, ListChecks, PenLine, Play, Shuffle, Sparkles, Target, TrendingDown } from 'lucide-react'
 import { useMemo } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { cn, pct, plural, relativeTime } from '@/lib/utils'
 import { ALL_SCOPE, buildQueue, speak, todayCounts } from '@/lib/vocab'
 import { statusOf } from '@shared/srs'
 import { ALL_KINDS_FOR_TEST, MIN_WORDS_FOR_TEST, buildWordTest, filterBySource, isTestable } from '@shared/wordTest'
+import { summarize, VERBS } from '@shared/irregular'
 import { countWords } from '@shared/writing'
 import { monthKey, taskForMonth } from '@shared/writingTasks'
 
@@ -36,8 +37,9 @@ export function TodayPage() {
   const { data: logs } = useAsync(() => window.api.vocab.reviews())
   const { data: decks } = useAsync(() => window.api.decks.list())
   const { data: writing } = useAsync(() => window.api.writing.list())
+  const { data: irregular } = useAsync(() => window.api.irregular.progress())
   const now = useMemo(() => new Date(), [attempts, vocab, logs])
-  const ready = attempts && bank && vocab && logs && settings && writing
+  const ready = attempts && bank && vocab && logs && settings && writing && irregular
 
   const view = useMemo(() => {
     if (!ready) return null
@@ -182,6 +184,19 @@ export function TodayPage() {
       })
     }
 
+    // 6. Irregular verbs: reviews that are due, or a gentle first push
+    const verbs = summarize(VERBS, irregular, now)
+    if (verbs.due > 0 || verbs.started === 0) {
+      plan.push({
+        id: 'irregular',
+        icon: Shuffle,
+        title: verbs.due > 0 ? `Irregular verbs: ${plural(verbs.due, 'verb')} due` : 'Learn the irregular verbs',
+        detail: verbs.due > 0 ? `${verbs.started} of ${verbs.total} started · about ${Math.max(1, Math.round(verbs.due / 4))} min` : 'Start with the 60 most frequent — go, make, take… — a few minutes a day.',
+        done: false,
+        action: { label: verbs.due > 0 ? 'Review' : 'Start', run: () => navigate({ page: 'irregular' }) }
+      })
+    }
+
     // Activity heatmap: last 12 weeks, Monday-first columns.
     const days: { key: string; date: Date; count: number }[] = []
     const end = new Date(now)
@@ -212,7 +227,7 @@ export function TodayPage() {
       tests: { done: attempts.filter((a) => a.mode === 'full' && a.completed).length, accuracy: answers30.length ? pct(answers30.filter((r) => r.correct).length, answers30.length) : null },
       recentWords: [...vocab].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10)
     }
-  }, [ready, attempts, bank, vocab, logs, decks, writing, settings, tests, now, navigate, startSession])
+  }, [ready, attempts, bank, vocab, logs, decks, writing, irregular, settings, tests, now, navigate, startSession])
 
   if (!view) return <div className="flex-1" />
 
