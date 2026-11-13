@@ -220,6 +220,11 @@ checked text goes to the `writing/` folder of your workbook. The feedback is in 
 corrected English always stays English. The AI's answer is validated before it is shown (a correction is kept only if its quote
 is really in your text), but the score is feedback to track your progress, not an exam result.
 
+### Sharing and updates
+
+Publishing the app on GitHub, the update notice and what a friend should know (macOS/Windows warnings for unsigned apps, own API key)
+are described in [docs/RELEASING.md](docs/RELEASING.md).
+
 ### Irregular verbs
 
 **Irregular verbs** (`⌘6`) holds all 180 verbs from the `06-irregular-verbs` note, grouped by the pattern of their forms (cut–cut–cut,

@@ -10,3 +10,5 @@ dist
 .env.*
 .vscode/*
 !.vscode/extensions.json
+
+promo/

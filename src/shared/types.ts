@@ -271,6 +271,8 @@ export interface Settings {
   showTopics: boolean
   /** A one-letter spelling slip in a vocabulary question counts as correct. */
   forgiveTypos: boolean
+  /** Look for a newer release on GitHub at startup (once a day at most). */
+  checkUpdates: boolean
   /** Language of AI feedback on writing and chats (the corrected English stays English). */
   feedbackLanguage: 'uk' | 'en'
   /** Short tips about mistakes while chatting in a correspondence exercise. */

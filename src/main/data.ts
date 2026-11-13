@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: Settings = {
   shuffleAnswers: true,
   showTopics: false,
   forgiveTypos: true,
+  checkUpdates: true,
   feedbackLanguage: 'uk',
   chatTips: true,
   desiredRetention: 0.9,

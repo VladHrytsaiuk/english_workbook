@@ -89,6 +89,7 @@ const api: WorkbookApi = {
     openExternal: (url) => invoke('app:openExternal', url),
     setTheme: (theme) => invoke('app:setTheme', theme),
     version: () => invoke('app:version'),
+    checkUpdate: () => invoke('app:checkUpdate'),
     dataDir: () => invoke('app:dataDir'),
     openDataDir: () => invoke('app:openDataDir')
   }

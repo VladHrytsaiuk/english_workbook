@@ -1,6 +1,7 @@
 import { BarChart3, BookOpen, CalendarCheck, CircleHelp, Languages, ListChecks, Monitor, Moon, PenLine, Play, Settings as SettingsIcon, Shuffle, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { HelpDialog } from './HelpDialog'
+import { UpdateBanner } from './UpdateBanner'
 import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { useKeydown } from '@/hooks/useHotkey'
@@ -146,6 +147,7 @@ export function Sidebar() {
           )
         })}
       </nav>
+      <UpdateBanner />
       <div className="flex items-center gap-1.5 p-3">
         <Tooltip content="Help & tour" side="top">
           <button

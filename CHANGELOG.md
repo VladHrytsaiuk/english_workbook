@@ -4,6 +4,15 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.9.0] — 2026-11-13
+
+### Added
+- **Update notice**: once a day (can be turned off in Settings → About) the app asks GitHub Releases for the latest version and, when
+  there is a newer one, shows *Update X available* in the sidebar with a link to the download; *Check now* in Settings does it at once.
+  It stays silent until `UPDATE_REPO` in `src/shared/updates.ts` is set.
+- `npm run release:publish` uploads the installers to GitHub Releases with the CHANGELOG section as notes; `docs/RELEASING.md`
+  describes publishing, updating and what a recipient should know (unsigned app warnings, own Gemini key). MIT `LICENSE`.
+
 ## [1.8.1] — 2026-11-13
 
 ### Fixed

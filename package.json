@@ -1,7 +1,7 @@
 {
   "name": "english-workbook",
   "productName": "EnglishWorkbook",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "description": "A personal English workbook: Markdown notes, tests, translation and progress stats.",
   "main": "./out/main/index.js",
   "author": "Vlad",
@@ -18,7 +18,8 @@
     "icon": "env -u ELECTRON_RUN_AS_NODE electron scripts/icon/main.cjs",
     "smoke": "electron-vite build && node scripts/smoke.mjs .smoke/shots",
     "dist:win": "npm run typecheck && npm run test && electron-vite build && electron-builder --win",
-    "dist:all": "npm run typecheck && npm run test && electron-vite build && electron-builder --mac dmg --win"
+    "release:publish": "node scripts/publish-release.mjs",
+  "dist:all": "npm run typecheck && npm run test && electron-vite build && electron-builder --mac dmg --win"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0",

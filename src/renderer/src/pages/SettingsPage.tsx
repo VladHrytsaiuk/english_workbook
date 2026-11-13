@@ -14,6 +14,7 @@ import { useApp, useAsync } from '@/lib/store'
 import { englishVoices, setPreferredVoice, speak } from '@/lib/vocab'
 import { cn } from '@/lib/utils'
 import type { SecretsStatus, ThemePref, TranslationProvider } from '@shared/types'
+import { UPDATE_REPO } from '@shared/updates'
 
 const GEMINI_MODELS = [
   { id: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash-Lite', hint: 'Free tier, fast (default)' },
@@ -58,6 +59,7 @@ export function SettingsPage() {
   const { data: cacheSize, reload: reloadCache } = useAsync(() => window.api.translate.cacheSize())
   const { data: dataDir } = useAsync(() => window.api.app.dataDir())
   const { data: version } = useAsync(() => window.api.app.version())
+  const [updateMessage, setUpdateMessage] = useState('Look for a newer version now.')
 
   useEffect(() => {
     void window.api.secrets.status().then(setSecrets)
@@ -350,6 +352,31 @@ export function SettingsPage() {
 
           <Section title="About">
             <p className="text-[13px] text-muted-foreground">EnglishWorkbook {version}</p>
+            {UPDATE_REPO && (
+              <>
+                <Row label="Check for updates at startup" description="Once a day the app asks GitHub whether a newer version exists (nothing about you is sent). You decide whether to download it.">
+                  <Switch checked={settings.checkUpdates} onCheckedChange={(checkUpdates) => void updateSettings({ checkUpdates })} />
+                </Row>
+                <Row label="Updates" description={updateMessage}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setUpdateMessage('Checking…')
+                      void window.api.app.checkUpdate().then((r) => {
+                        if (!r.ok) setUpdateMessage(r.message)
+                        else if (r.info.available) {
+                          setUpdateMessage(`Version ${r.info.latest} is available.`)
+                          if (r.info.url) void window.api.app.openExternal(r.info.url)
+                        } else setUpdateMessage(`You have the latest version (${r.info.current}).`)
+                      })
+                    }}
+                  >
+                    Check now
+                  </Button>
+                </Row>
+              </>
+            )}
           </Section>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import type { UpdateInfo } from './updates'
 import type {
   Attempt,
   Deck,
@@ -112,6 +113,8 @@ export interface WorkbookApi {
     openExternal(url: string): Promise<void>
     setTheme(theme: Settings['theme']): Promise<void>
     version(): Promise<string>
+    /** Looks for a newer release on GitHub (needs `UPDATE_REPO`). */
+    checkUpdate(): Promise<{ ok: true; info: UpdateInfo } | { ok: false; message: string }>
     dataDir(): Promise<string>
     openDataDir(): Promise<void>
   }
