@@ -2,7 +2,7 @@
  * GitHub repository the releases are published in, as "owner/name". While empty, the app never contacts the network
  * about updates. Set it once the repository exists (see docs/RELEASING.md).
  */
-export const UPDATE_REPO = ''
+export const UPDATE_REPO = 'VladHrytsaiuk/english_workbook'
 
 export interface UpdateInfo {
   current: string

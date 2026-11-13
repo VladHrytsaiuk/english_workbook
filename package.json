@@ -1,7 +1,7 @@
 {
   "name": "english-workbook",
   "productName": "EnglishWorkbook",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "A personal English workbook: Markdown notes, tests, translation and progress stats.",
   "main": "./out/main/index.js",
   "author": "Vlad",
@@ -66,6 +66,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/OWNER/REPO.git"
+    "url": "https://github.com/VladHrytsaiuk/english_workbook.git"
   }
 }

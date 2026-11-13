@@ -4,6 +4,12 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.10.1] — 2026-11-13
+
+### Changed
+- The update repository (`VladHrytsaiuk/english_workbook`) is set, so update checks and Windows automatic updates are now active.
+  This is the first version meant to be shared: earlier builds never look for updates.
+
 ## [1.10.0] — 2026-11-13
 
 ### Added
