@@ -17,6 +17,8 @@ const next = rest.indexOf('\n## [', 5)
 const notes = (next < 0 ? rest : rest.slice(0, next)).replace(/^## .*\n/, '').trim()
 
 const files = [`EnglishWorkbook-${version}-arm64.dmg`, `EnglishWorkbook-Setup-${version}.exe`, `EnglishWorkbook-${version}-portable.exe`].map((f) => join(root, 'release', f))
+// Needed by the in-app updater on Windows: the update manifest and the block map (smaller downloads).
+files.push(join(root, 'release', 'latest.yml'), join(root, 'release', `EnglishWorkbook-Setup-${version}.exe.blockmap`))
 const missing = files.filter((f) => !existsSync(f))
 if (missing.length) throw new Error(`Build first (npm run dist:all). Missing:\n${missing.join('\n')}`)
 

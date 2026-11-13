@@ -14,6 +14,7 @@ import { useApp, useAsync } from '@/lib/store'
 import { englishVoices, setPreferredVoice, speak } from '@/lib/vocab'
 import { cn } from '@/lib/utils'
 import type { SecretsStatus, ThemePref, TranslationProvider } from '@shared/types'
+import { useAutoUpdate } from '@/components/UpdateBanner'
 import { UPDATE_REPO } from '@shared/updates'
 
 const GEMINI_MODELS = [
@@ -59,7 +60,21 @@ export function SettingsPage() {
   const { data: cacheSize, reload: reloadCache } = useAsync(() => window.api.translate.cacheSize())
   const { data: dataDir } = useAsync(() => window.api.app.dataDir())
   const { data: version } = useAsync(() => window.api.app.version())
+  const autoUpdate = useAutoUpdate()
+  const [checked, setChecked] = useState(false)
   const [updateMessage, setUpdateMessage] = useState('Look for a newer version now.')
+  const autoMessage =
+    autoUpdate.state === 'checking'
+      ? 'Checking…'
+      : autoUpdate.state === 'downloading'
+        ? `Downloading ${autoUpdate.version} — ${autoUpdate.percent}%`
+        : autoUpdate.state === 'ready'
+          ? `Version ${autoUpdate.version} is ready — restart to install.`
+          : autoUpdate.state === 'error'
+            ? autoUpdate.message
+            : checked
+              ? 'You have the latest version.'
+              : 'Updates are downloaded in the background and installed when you restart.'
 
   useEffect(() => {
     void window.api.secrets.status().then(setSecrets)
@@ -357,12 +372,17 @@ export function SettingsPage() {
                 <Row label="Check for updates at startup" description="Once a day the app asks GitHub whether a newer version exists (nothing about you is sent). You decide whether to download it.">
                   <Switch checked={settings.checkUpdates} onCheckedChange={(checkUpdates) => void updateSettings({ checkUpdates })} />
                 </Row>
-                <Row label="Updates" description={updateMessage}>
+                <Row label="Updates" description={autoUpdate.state !== 'unsupported' ? autoMessage : updateMessage}>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setUpdateMessage('Checking…')
+                      if (autoUpdate.state !== 'unsupported') {
+                        setChecked(true)
+                        void window.api.app.checkAutoUpdate()
+                        return
+                      }
                       void window.api.app.checkUpdate().then((r) => {
                         if (!r.ok) setUpdateMessage(r.message)
                         else if (r.info.available) {

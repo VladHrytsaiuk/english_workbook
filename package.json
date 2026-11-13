@@ -1,7 +1,7 @@
 {
   "name": "english-workbook",
   "productName": "EnglishWorkbook",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "A personal English workbook: Markdown notes, tests, translation and progress stats.",
   "main": "./out/main/index.js",
   "author": "Vlad",
@@ -19,11 +19,12 @@
     "smoke": "electron-vite build && node scripts/smoke.mjs .smoke/shots",
     "dist:win": "npm run typecheck && npm run test && electron-vite build && electron-builder --win",
     "release:publish": "node scripts/publish-release.mjs",
-  "dist:all": "npm run typecheck && npm run test && electron-vite build && electron-builder --mac dmg --win"
+    "dist:all": "npm run typecheck && npm run test && electron-vite build && electron-builder --mac dmg --win"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0",
     "chokidar": "^4.0.3",
+    "electron-updater": "^6.8.11",
     "gray-matter": "^4.0.3",
     "js-yaml": "^5.5.0",
     "ts-fsrs": "^5.4.2"
@@ -62,5 +63,9 @@
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vitest": "^5.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OWNER/REPO.git"
   }
 }

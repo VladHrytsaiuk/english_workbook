@@ -9,6 +9,7 @@ import { learningDataDir, useWorkbookDir } from './storage'
 import { syncVocabularyFolder } from './vocabFiles'
 import { clearTranslationCache, enrichWord, generateReadingPassage, translate, translationCacheSize } from './translate'
 import * as vocab from './vocab'
+import { autoUpdateSupported, checkAutoUpdate, getAutoUpdateStatus, installUpdate } from './autoUpdate'
 import { checkForUpdate } from './updates'
 import * as irregular from './irregular'
 import * as writing from './writing'
@@ -201,6 +202,9 @@ export function registerIpc(): void {
     applyTheme(theme)
   })
   ipcMain.handle('app:checkUpdate', () => checkForUpdate())
+  ipcMain.handle('update:status', () => (autoUpdateSupported() ? getAutoUpdateStatus() : { state: 'unsupported' }))
+  ipcMain.handle('update:check', () => checkAutoUpdate())
+  ipcMain.handle('update:install', () => installUpdate())
   ipcMain.handle('app:version', () => app.getVersion())
   ipcMain.handle('app:dataDir', () => learningDataDir())
   ipcMain.handle('app:openDataDir', () => shell.openPath(learningDataDir()).then(() => undefined))

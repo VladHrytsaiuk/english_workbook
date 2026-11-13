@@ -4,6 +4,14 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.10.0] — 2026-11-13
+
+### Added
+- **Automatic updates on Windows** (installer build): the app downloads a newer release in the background and offers *Restart to
+  install* in the sidebar; Settings → About shows the progress. The portable build and macOS keep the *update available* notice.
+  Releases now include `latest.yml` and the `.blockmap` file (`npm run release:publish` uploads them). Active once the repository
+  is set (see `docs/RELEASING.md`).
+
 ## [1.9.0] — 2026-11-13
 
 ### Added

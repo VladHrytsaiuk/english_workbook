@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { setVocabularyListener, stopWatching } from './content'
 import { getSettings, updateSettings } from './data'
+import { initAutoUpdate } from './autoUpdate'
 import { activateWorkbook, applyTheme, registerIpc } from './ipc'
 import { syncVocabularyFolder } from './vocabFiles'
 
@@ -66,6 +67,7 @@ app.whenReady().then(async () => {
     if (dir) void syncVocabularyFolder(dir)
   })
   createWindow()
+  initAutoUpdate()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

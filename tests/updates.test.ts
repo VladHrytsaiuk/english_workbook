@@ -27,3 +27,12 @@ describe('parseRelease', () => {
     expect(parseRelease({ ...release, html_url: 'http://evil.example/x' }, '1.0.0')?.url).toBe('')
   })
 })
+
+describe('release configuration', () => {
+  it('package.json names the same repository as UPDATE_REPO once it is set', async () => {
+    const { UPDATE_REPO } = await import('@shared/updates')
+    const pkg = (await import('../package.json')).default as { repository?: { url?: string } }
+    if (UPDATE_REPO) expect(pkg.repository?.url).toContain(`github.com/${UPDATE_REPO}`)
+    else expect(pkg.repository?.url).toBeTruthy()
+  })
+})

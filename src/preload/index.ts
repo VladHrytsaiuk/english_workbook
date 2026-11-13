@@ -90,6 +90,14 @@ const api: WorkbookApi = {
     setTheme: (theme) => invoke('app:setTheme', theme),
     version: () => invoke('app:version'),
     checkUpdate: () => invoke('app:checkUpdate'),
+    updateStatus: () => invoke('update:status'),
+    checkAutoUpdate: () => invoke('update:check'),
+    installUpdate: () => invoke('update:install'),
+    onUpdateStatus: (cb) => {
+      const listener = (_e: unknown, s: Parameters<typeof cb>[0]): void => cb(s)
+      ipcRenderer.on('update:status', listener)
+      return () => ipcRenderer.removeListener('update:status', listener)
+    },
     dataDir: () => invoke('app:dataDir'),
     openDataDir: () => invoke('app:openDataDir')
   }

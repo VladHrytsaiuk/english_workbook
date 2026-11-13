@@ -1,4 +1,4 @@
-import type { UpdateInfo } from './updates'
+import type { AutoUpdateStatus, UpdateInfo } from './updates'
 import type {
   Attempt,
   Deck,
@@ -113,6 +113,11 @@ export interface WorkbookApi {
     openExternal(url: string): Promise<void>
     setTheme(theme: Settings['theme']): Promise<void>
     version(): Promise<string>
+    /** Built-in updater (Windows installer): state, a manual check, restart-to-install and live changes. `unsupported` elsewhere. */
+    updateStatus(): Promise<AutoUpdateStatus>
+    checkAutoUpdate(): Promise<void>
+    installUpdate(): Promise<void>
+    onUpdateStatus(cb: (s: AutoUpdateStatus) => void): () => void
     /** Looks for a newer release on GitHub (needs `UPDATE_REPO`). */
     checkUpdate(): Promise<{ ok: true; info: UpdateInfo } | { ok: false; message: string }>
     dataDir(): Promise<string>

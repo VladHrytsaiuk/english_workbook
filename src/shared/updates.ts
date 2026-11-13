@@ -35,3 +35,12 @@ export function parseRelease(json: unknown, current: string): UpdateInfo | null 
   const url = typeof r.html_url === 'string' && /^https:\/\/github\.com\//.test(r.html_url) ? r.html_url : ''
   return { current, latest, available: compareVersions(latest, current) > 0, url, notes: typeof r.body === 'string' ? r.body.trim().slice(0, 4000) : '' }
 }
+
+/** State of the built-in updater (Windows installer builds). */
+export type AutoUpdateStatus =
+  | { state: 'unsupported' }
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+  | { state: 'error'; message: string }

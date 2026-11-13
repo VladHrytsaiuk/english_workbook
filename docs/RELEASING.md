@@ -8,7 +8,7 @@
    git remote add origin git@github.com:your-name/english-workbook.git
    git push -u origin main --follow-tags
    ```
-3. Put the repository name into `src/shared/updates.ts`:
+3. Put the repository name into `src/shared/updates.ts` **and** into `repository.url` of `package.json` (it contains `OWNER/REPO` now):
    ```ts
    export const UPDATE_REPO = 'your-name/english-workbook'
    ```
@@ -31,14 +31,25 @@ People who have the app see **“Update 1.9.0 available”** in the sidebar with
 The button opens the release page; they download the new installer and install it over the old one. Their notes, tests,
 vocabulary and progress are in their workbook folder and are not touched.
 
+## Automatic updates on Windows
+
+The **Setup** installer build updates itself: it checks GitHub at startup (Settings → About can switch that off), downloads the new
+version in the background and shows **“Update X is ready — Restart to install”** in the sidebar. Nothing is installed without that click
+(and a downloaded update is also installed when the app is closed). It needs `latest.yml` and the `.blockmap` next to the installer
+in the release; `npm run dist:all` creates them and `npm run release:publish` uploads them.
+
+- The **portable** `.exe` and **macOS** only get the *“Update available — download”* notice.
+- `repository` in `package.json` must name the same repository as `UPDATE_REPO` (electron-builder reads it to write `latest.yml`).
+  A test fails if they differ.
+- The first version that has this must be installed by hand; from then on updates arrive by themselves.
+
 ## What the recipient should know
 
 - **Mac:** the app is not signed with an Apple Developer certificate, so on first launch macOS says it cannot verify the developer.
   Open it with *right-click → Open → Open*, or, if the app is reported as damaged, run `xattr -cr /Applications/EnglishWorkbook.app` once.
 - **Windows:** SmartScreen may say “Windows protected your PC”: *More info → Run anyway*. Prefer the `Setup` installer to the portable file.
 - Everyone needs **their own Gemini key** (free, Settings → Translation). Keys are stored encrypted on that computer only.
-- Windows can be given in-place automatic updates later (electron-updater); on macOS that needs a paid Apple Developer account,
-  which is why the app only *tells* about updates for now.
+- On macOS an in-place update would need a paid Apple Developer account, which is why the app only *tells* about updates there.
 
 ## Before the very first push — checklist
 
