@@ -18,6 +18,36 @@ export const scenarios = {
     await shot('after-setup')
   },
 
+  async pausesave({ page, shot }) {
+    await ensureSetup(page)
+    await page.evaluate(() => window.api.settings.update({ tourDone: true }))
+    await page.reload()
+    await page.waitForTimeout(800)
+    await page.getByRole('button', { name: /^Tests/ }).click()
+    await page.waitForTimeout(700)
+    await page.getByText('Tenses — All Question Types').first().click()
+    await page.waitForTimeout(700)
+    await page.getByRole('button', { name: /Start|Begin|Full test/ }).first().click()
+    await page.waitForTimeout(500)
+    const giveUp = async () => {
+      await page.getByRole('button', { name: /I don't know/ }).click()
+      await page.keyboard.press('Enter')
+      await page.waitForTimeout(120)
+    }
+    await giveUp()
+    await giveUp()
+    await page.getByRole('button', { name: /^Notes/ }).click() // look something up
+    await page.waitForTimeout(500)
+    console.log('attempts while paused:', (await page.evaluate(() => window.api.progress.attempts())).length)
+    await page.getByRole('button', { name: /Test in progress/ }).click()
+    await page.waitForTimeout(300)
+    for (let i = 0; i < 19; i++) await giveUp()
+    await page.waitForTimeout(800)
+    const at = await page.evaluate(() => window.api.progress.attempts())
+    console.log('attempts after finishing:', at.length, 'completed:', at[0]?.completed, 'results:', at[0]?.results.length)
+    await shot('finished')
+  },
+
   async irregular({ page, shot }) {
     await ensureSetup(page)
     await page.evaluate(() => window.api.settings.update({ tourDone: true }))

@@ -87,11 +87,15 @@ export function RunPage({ session, back }: { session: RunSession; back: Route })
   )
 
   // Leaving mid-test (sidebar, ⌘1…) still records what was answered.
+  // Only on a real unmount: `save` changes identity with the app context, and a cleanup that ran then would
+  // store a half-finished attempt and block the final save.
+  const saveRef = useRef(save)
+  saveRef.current = save
   useEffect(() => {
     return () => {
-      if (!saved.current && Object.keys(latest.current.graded).length) void save(false)
+      if (!saved.current && Object.keys(latest.current.graded).length) void saveRef.current(false)
     }
-  }, [save])
+  }, [])
 
   const exit = (): void => {
     if (!saved.current && answeredCount > 0) {

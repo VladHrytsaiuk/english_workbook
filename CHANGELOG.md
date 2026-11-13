@@ -4,6 +4,13 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.8.1] — 2026-11-13
+
+### Fixed
+- **Answers given after leaving a test and coming back were not counted**: moving to another page saved the half-finished test
+  as finished, and the final save was skipped, so the mistakes bank kept questions you had already answered correctly. A test now
+  saves once, when it really ends.
+
 ## [1.8.0] — 2026-11-09
 
 ### Added

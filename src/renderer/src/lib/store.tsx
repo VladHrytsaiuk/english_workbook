@@ -118,6 +118,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRoute({ page: 'run', session: { ...s, id: uid() }, back })
   }, [])
 
+  const bumpData = useCallback(() => setDataVersion((v) => v + 1), [])
+
   const navigate = useCallback((next: Route, opts?: { end?: boolean }) => {
     const cur = routeRef.current
     if (cur.page === 'run' && next.page !== 'run') setPausedRun(opts?.end ? null : cur)
@@ -138,14 +140,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       navigate,
       pausedRun,
       dataVersion,
-      bumpData: () => setDataVersion((v) => v + 1),
+      bumpData,
       toasts,
       toast,
       startSession,
       tourOpen,
       setTourOpen
     }),
-    [settings, updateSettings, notes, tests, contentLoaded, reloadContent, route, dataVersion, toasts, toast, startSession, tourOpen, navigate, pausedRun]
+    [settings, updateSettings, notes, tests, contentLoaded, reloadContent, route, dataVersion, toasts, toast, startSession, tourOpen, navigate, pausedRun, bumpData]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
