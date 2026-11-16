@@ -1,7 +1,7 @@
 {
   "name": "english-workbook",
   "productName": "EnglishWorkbook",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "A personal English workbook: Markdown notes, tests, translation and progress stats.",
   "main": "./out/main/index.js",
   "author": "Vlad",

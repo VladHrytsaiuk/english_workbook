@@ -129,7 +129,7 @@ Write the summary, strengths, improvements, explanations and notes in ${lang()}.
   const user = essay
     ? `Task:\n${e.prompt}${target}\n\nRequired length: ${e.minWords ?? 120}–${e.maxWords ?? 200} words.\n\nLearner's text (${countWords(e.text)} words):\n"""\n${e.text}\n"""`
     : `Situation: ${e.prompt}\nThe learner should: ${(e.goals ?? []).join('; ')}\nRegister: ${e.register ?? 'neutral'}${target}\n\nConversation:\n${chatTranscript(e.messages, 40)}`
-  return { system, user, schema: EVAL_SCHEMA, task: 'evaluate this writing' }
+  return { system, user, schema: EVAL_SCHEMA, task: 'evaluate this writing', timeoutMs: 45_000 }
 }
 
 const CHAT_SCHEMA: JsonSchema = {
@@ -153,7 +153,7 @@ Rules:
 - Never write the learner's lines and never correct the learner inside your reply.
 ${e.targetWords.length ? `- Create chances for the learner to use these words: ${e.targetWords.join('; ')}. Do not use all of them yourself.\n` : ''}- Set "done" to true when the goals have been reached or the conversation has come to a natural end (also after about 8 learner messages); then close the conversation politely in your reply.
 - "tip": ${tips ? `if the learner's LAST message has a clear mistake, give ONE short tip in ${lang()} with the fix, for example «"I am agree" → "I agree" (agree is a verb)». Mention only the most important mistake. If there is no clear mistake, return an empty string.` : 'always an empty string.'}`
-  return { system, user: `Conversation so far:\n${chatTranscript(e.messages)}\n\nWrite your next reply.`, schema: CHAT_SCHEMA, task: 'continue the conversation' }
+  return { system, user: `Conversation so far:\n${chatTranscript(e.messages)}\n\nWrite your next reply.`, schema: CHAT_SCHEMA, task: 'continue the conversation', timeoutMs: 20_000 }
 }
 
 // ───────────── fake provider for automated UI tests (never set in normal use) ─────────────

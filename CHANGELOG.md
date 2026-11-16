@@ -4,6 +4,13 @@ All notable changes to EnglishWorkbook. Versions follow [semantic versioning](ht
 `MAJOR.MINOR.PATCH` — new features bump MINOR, fixes bump PATCH. The version lives in `package.json`
 and is shown in Settings → About and in the `.dmg` file name.
 
+## [1.10.2] — 2026-11-16
+
+### Fixed
+- **Reading with gaps often fell back to your saved sentences instead of an AI-written text**: every Gemini request had a 10-second
+  limit, too short for a whole passage on the free tier. Now a passage may take up to 40 s (the button says so), a writing evaluation
+  up to 45 s, a word description and a chat reply 20 s; short translations keep 10 s.
+
 ## [1.10.1] — 2026-11-13
 
 ### Changed

@@ -301,7 +301,7 @@ export function WordTestDialog({
               </Button>
             )}
             <Button disabled={!canStart} onClick={() => (format === 'quiz' ? startQuiz() : void startReading())}>
-              {busy ? <LoaderCircle className="animate-spin" /> : <Play className="fill-current" />} {busy ? 'Writing a text…' : 'Start test'}
+              {busy ? <LoaderCircle className="animate-spin" /> : <Play className="fill-current" />} {busy ? 'Writing a text… up to 40 s' : 'Start test'}
             </Button>
           </div>
         </div>

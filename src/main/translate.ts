@@ -86,6 +86,8 @@ export interface LlmRequest {
   schema: JsonSchema
   /** For messages, e.g. "translate this fragment". */
   task: string
+  /** Time one model gets to answer (Gemini). Short answers 10 s; a whole text needs more. */
+  timeoutMs?: number
 }
 
 type Json = Record<string, unknown>
@@ -156,7 +158,7 @@ async function geminiJsonOnce(req: LlmRequest, key: string, model: string, cance
         contents: [{ role: 'user', parts: [{ text: req.user }] }],
         generationConfig: { responseMimeType: 'application/json', responseSchema: toGeminiSchema(req.schema), maxOutputTokens: 4000 }
       }),
-      signal: AbortSignal.any([cancel, AbortSignal.timeout(10_000)])
+      signal: AbortSignal.any([cancel, AbortSignal.timeout(req.timeoutMs ?? 10_000)])
     })
   } catch (e) {
     if (process.env.EW_DEBUG) console.log(`[gemini] ${model} → network error after ${Date.now() - started} ms: ${String(e)}`)
@@ -427,7 +429,8 @@ export async function enrichWord(word: { text: string; translation: string; cont
       system: ENRICH_SYSTEM,
       user: `Word or phrase: """${word.text}"""\nKnown translation: ${word.translation || '(none)'}${word.context ? `\nContext: """${word.context}"""` : ''}${topics}`,
       schema: ENRICH_SCHEMA,
-      task: 'describe this word'
+      task: 'describe this word',
+      timeoutMs: 20_000
     },
     'AI enrichment'
   )
@@ -521,7 +524,8 @@ export async function generateReadingPassage(words: { id: string; text: string; 
     system: READING_SYSTEM,
     user: `Words and phrases to use:\n${list.map((w, i) => `${i + 1}. ${w.text}${w.pos ? ` (${w.pos})` : ''} — ${w.translation}`).join('\n')}`,
     schema: READING_SCHEMA,
-    task: 'write the passage'
+    task: 'write the passage',
+    timeoutMs: 40_000
   }
   let last: { code: TranslateErrorCode; message: string } = { code: 'unknown', message: 'The AI did not return a usable text.' }
   for (let attempt = 0; attempt < 2; attempt++) {
